@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<header>
+     <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="stylesheet" type="text/css" href="M-C-S.css" />
+</header>
+
+<body>
+<div class="head">
+    <h1 class= "logo">Her<br /> &nbsp; Rise</h1>
+    <div class='headerlinks'>
+    <a href="M-C-S.html" class="headerlink">Home</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+    <a href="About.html" class="headerlink">About Us</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+    <a href="Contact.html" class="headerlink">Contact Us</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+    <button class='btn1'><a href='Login.html'class='headerlink1'>LOG IN</a></button>
+    </div> <br/>
+    <h1 class="title">Digitized Maternal Care</h1>
+    <p class="subtitle">Empowering Expectant Mothers Through Digital Awareness</p>
+</div>
+<div class="loginbody">
+  <div class="flex items-center justify-center min-h-screen">
+    <div class="form-container w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
+        <div id="message-box" class="hide p-4 mb-4 text-sm rounded-lg" role="alert"></div>
+        <div class="flex flex-col items-center mb-6">
+            <svg class="h-12 w-12 text-indigo-600 mb-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+            <h2 class="text-3xl font-bold text-gray-900">Welcome</h2>
+        </div>
+        <div class="flex mb-6">
+            <button id="showLoginBtn" class="flex-1 py-3 text-lg font-medium text-center text-white bg-indigo-600 rounded-tl-lg rounded-bl-lg hover:bg-indigo-700 transition-colors duration-200">
+                Log In
+            </button>
+            <button id="showSignupBtn" class="flex-1 py-3 text-lg font-medium text-center text-gray-700 bg-gray-200 rounded-tr-lg rounded-br-lg hover:bg-gray-300 transition-colors duration-200">
+                Sign Up
+            </button>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+            <h3 class="text-xl font-semibold text-gray-800 text-center">Log into your account</h3>
+            <div class="input-group relative">
+                <input type="email" id="loginEmail" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
+                <label for="loginEmail" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Email address</label>
+            </div>
+            <div class="input-group relative">
+                <input type="password" id="loginPassword" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
+                <label for="loginPassword" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Password</label>
+            </div>
+
+            <div class="text-sm text-right">
+                <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">Forgot password?</a>
+            </div>
+            <button type="submit" class="w-full py-3 px-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200">
+                Sign in
+            </button>
+        </form>
+        <form id="signupForm" class="space-y-6 hide">
+            <h3 class="text-xl font-semibold text-gray-800 text-center">Create a new account</h3>
+            <div class="input-group relative">
+                <input type="text" id="signupName" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
+                <label for="signupName" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Full Name</label>
+            </div>
+            <div class="input-group relative">
+                <input type="email" id="signupEmail" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
+                <label for="signupEmail" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Email address</label>
+            </div>
+            <div class="input-group relative">
+                <input type="password" id="signupPassword" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
+                <label for="signupPassword" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Password</label>
+            </div>
+            <div class="input-group relative">
+                <input type="password" id="signupConfirmPassword" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
+                <label for="signupConfirmPassword" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Confirm Password</label>
+            </div>
+            
+            <button type="submit" class="w-full py-3 px-4 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200">
+                Create Account
+            </button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const showLoginBtn = document.getElementById('showLoginBtn');
+            const showSignupBtn = document.getElementById('showSignupBtn');
+            const messageBox = document.getElementById('message-box');
+        
+            const showMessage = (message, type) => {
+                messageBox.textContent = message;
+                messageBox.classList.remove('hide');
+                if (type === 'success') {
+                    messageBox.className = 'p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400';
+                } else if (type === 'error') {
+                    messageBox.className = 'p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400';
+                }
+                setTimeout(() => {
+                    messageBox.classList.add('hide');
+                }, 5000);
+            };
+            const switchForm = (formToShow, btnToActivate, btnToDeactivate) => {
+                loginForm.classList.add('hide');
+                signupForm.classList.add('hide');
+                formToShow.classList.remove('hide');
+                btnToActivate.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                btnToActivate.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+                btnToDeactivate.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+                btnToDeactivate.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                messageBox.classList.add('hide');
+            };
+            showLoginBtn.addEventListener('click', () => {
+                switchForm(loginForm, showLoginBtn, showSignupBtn);
+            });
+
+            showSignupBtn.addEventListener('click', () => {
+                switchForm(signupForm, showSignupBtn, showLoginBtn);
+            });
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+
+                if (!email || !password) {
+                    showMessage('Please fill in all fields.', 'error');
+                    return;
+                }
+            
+                showMessage('Login successful!', 'success');
+                console.log('Login attempt:', { email, password });
+                
+            });
+            signupForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const name = document.getElementById('signupName').value;
+                const email = document.getElementById('signupEmail').value;
+                const password = document.getElementById('signupPassword').value;
+                const confirmPassword = document.getElementById('signupConfirmPassword').value;
+
+                if (!name || !email || !password || !confirmPassword) {
+                    showMessage('Please fill in all fields.', 'error');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showMessage('Passwords do not match.', 'error');
+                    return;
+                }
+
+                showMessage('Account created successfully!', 'success');
+                console.log('Sign-up attempt:', { name, email, password });
+            });
+        });
+    </script>
+
+</div>
+
+</div>
+</body>
+<footer class="footer" style="background-color: #f1f3f5; text-align: center;padding: 2rem;margin-top: auto;font-size: 0.9rem;color: #666;">
+    <h2 style="text-align: center; color: rgb(42, 64, 230); padding: 25px;font-size: 30px;"><b><u>Our Location</u></b></h2>
+    <iframe src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d3988.8445068397577!2d36.667343024482854!3d-1.2659244856031835!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1spcea%20kikuyu%20hospital!5e0!3m2!1sen!2ske!4v1754146258752!5m2!1sen!2ske" width="1500px" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <h1 style="text-align: center; padding: 2rem;font-weight: bold; font-size: large;color: blue;">SUBSCRIBE TO OUR WEEKLY NEWS</h1>
+    <input class= 'footerinput' type="email" placeholder='EMAIL' /> <br/> <br/>
+    <button class='footerbtn1'style="padding = 2rem">SUBSCRIBE</button>
+    <p>&copy; 2025 Digitized Maternal Care System | Powered by Community and Innovation</p>
+</footer>
+</html>
