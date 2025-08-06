@@ -17,143 +17,100 @@
     <p class="subtitle">Empowering Expectant Mothers Through Digital Awareness</p>
 </div>
 <div class="loginbody">
-  <div class="flex items-center justify-center min-h-screen">
-    <div class="form-container w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
-        <div id="message-box" class="hide p-4 mb-4 text-sm rounded-lg" role="alert"></div>
-        <div class="flex flex-col items-center mb-6">
-            <svg class="h-12 w-12 text-indigo-600 mb-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
-            <h2 class="text-3xl font-bold text-gray-900">Welcome</h2>
-        </div>
-        <div class="flex mb-6">
-            <button id="showLoginBtn" class="flex-1 py-3 text-lg font-medium text-center text-white bg-indigo-600 rounded-tl-lg rounded-bl-lg hover:bg-indigo-700 transition-colors duration-200">
-                Log In
-            </button>
-            <button id="showSignupBtn" class="flex-1 py-3 text-lg font-medium text-center text-gray-700 bg-gray-200 rounded-tr-lg rounded-br-lg hover:bg-gray-300 transition-colors duration-200">
-                Sign Up
-            </button>
-        </div>
+    <div class="container">
+        <h2 id="form-title">Login</h2>
 
-        <form id="loginForm" class="space-y-6">
-            <h3 class="text-xl font-semibold text-gray-800 text-center">Log into your account</h3>
-            <div class="input-group relative">
-                <input type="email" id="loginEmail" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
-                <label for="loginEmail" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Email address</label>
-            </div>
-            <div class="input-group relative">
-                <input type="password" id="loginPassword" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
-                <label for="loginPassword" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Password</label>
-            </div>
+        <!-- Login Form -->
+        <form id="login-form" method="POST" action="/login" onsubmit="return validateLoginForm()">
+            <input type="text" name="username" id="login-username" placeholder="Username" required>
+            <input type="password" name="password" id="login-password" placeholder="Password" required>
+            <select name="role" id="login-role" required>
+                <option value="">-- Select Role --</option>
+                <option value="Patient">Patient</option>
+                <option value="Family">Family of Expectant Mother</option>
+                <option value="Healthcare">Healthcare Provider</option>
+            </select>
+            <button type="submit">Login</button>
+            <div class="toggle-link" onclick="toggleForm()">Don't have an account? Register</div>
+        </form>
 
-            <div class="text-sm text-right">
-                <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">Forgot password?</a>
-            </div>
-            <button type="submit" class="w-full py-3 px-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200">
-                Sign in
-            </button>
+        <!-- Registration Form -->
+        <form id="register-form" class="hidden" method="POST" action="/register" onsubmit="return validateRegisterForm()">
+            <input type="text" name="username" id="register-username" placeholder="Choose a Username" required>
+            <input type="email" name="email" id="register-email" placeholder="Enter Email" required>
+            <input type="password" name="password" id="register-password" placeholder="Create Password" required>
+            <select name="role" id="register-role" required>
+                <option value="">-- Select Role --</option>
+                <option value="Patient">Patient</option>
+                <option value="Family">Family of Expectant Mother</option>
+                <option value="Healthcare">Healthcare Provider</option>
+            </select>
+            <button type="submit">Create Account</button>
+            <div class="toggle-link" onclick="toggleForm()">Already have an account? Login</div>
         </form>
-        <form id="signupForm" class="space-y-6 hide">
-            <h3 class="text-xl font-semibold text-gray-800 text-center">Create a new account</h3>
-            <div class="input-group relative">
-                <input type="text" id="signupName" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
-                <label for="signupName" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Full Name</label>
-            </div>
-            <div class="input-group relative">
-                <input type="email" id="signupEmail" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
-                <label for="signupEmail" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Email address</label>
-            </div>
-            <div class="input-group relative">
-                <input type="password" id="signupPassword" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
-                <label for="signupPassword" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Password</label>
-            </div>
-            <div class="input-group relative">
-                <input type="password" id="signupConfirmPassword" placeholder=" " class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200" required>
-                <label for="signupConfirmPassword" class="absolute left-3 top-3 text-gray-500 transition-all duration-200 ease-in-out">Confirm Password</label>
-            </div>
-            
-            <button type="submit" class="w-full py-3 px-4 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200">
-                Create Account
-            </button>
-        </form>
+
+        <div id="error-msg" class="error"></div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const loginForm = document.getElementById('loginForm');
-            const signupForm = document.getElementById('signupForm');
-            const showLoginBtn = document.getElementById('showLoginBtn');
-            const showSignupBtn = document.getElementById('showSignupBtn');
-            const messageBox = document.getElementById('message-box');
-        
-            const showMessage = (message, type) => {
-                messageBox.textContent = message;
-                messageBox.classList.remove('hide');
-                if (type === 'success') {
-                    messageBox.className = 'p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400';
-                } else if (type === 'error') {
-                    messageBox.className = 'p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400';
-                }
-                setTimeout(() => {
-                    messageBox.classList.add('hide');
-                }, 5000);
-            };
-            const switchForm = (formToShow, btnToActivate, btnToDeactivate) => {
-                loginForm.classList.add('hide');
-                signupForm.classList.add('hide');
-                formToShow.classList.remove('hide');
-                btnToActivate.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
-                btnToActivate.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
-                btnToDeactivate.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
-                btnToDeactivate.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
-                messageBox.classList.add('hide');
-            };
-            showLoginBtn.addEventListener('click', () => {
-                switchForm(loginForm, showLoginBtn, showSignupBtn);
-            });
+        function toggleForm() {
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const formTitle = document.getElementById('form-title');
+            const errorMsg = document.getElementById('error-msg');
 
-            showSignupBtn.addEventListener('click', () => {
-                switchForm(signupForm, showSignupBtn, showLoginBtn);
-            });
-            loginForm.addEventListener('submit', (e) => {
-                e.preventDefault();
+            loginForm.classList.toggle('hidden');
+            registerForm.classList.toggle('hidden');
 
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
+            // Change title
+            if (loginForm.classList.contains('hidden')) {
+                formTitle.innerText = 'Create Account';
+            } else {
+                formTitle.innerText = 'Login';
+            }
 
-                if (!email || !password) {
-                    showMessage('Please fill in all fields.', 'error');
-                    return;
-                }
-            
-                showMessage('Login successful!', 'success');
-                console.log('Login attempt:', { email, password });
-                
-            });
-            signupForm.addEventListener('submit', (e) => {
-                e.preventDefault();
+            // Clear error message
+            errorMsg.innerText = '';
+        }
 
-                const name = document.getElementById('signupName').value;
-                const email = document.getElementById('signupEmail').value;
-                const password = document.getElementById('signupPassword').value;
-                const confirmPassword = document.getElementById('signupConfirmPassword').value;
+        function validateLoginForm() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            const role = document.getElementById('login-role').value;
 
-                if (!name || !email || !password || !confirmPassword) {
-                    showMessage('Please fill in all fields.', 'error');
-                    return;
-                }
-                
-                if (password !== confirmPassword) {
-                    showMessage('Passwords do not match.', 'error');
-                    return;
-                }
+            if (!username || !password || !role) {
+                showError("All login fields are required.");
+                return false;
+            }
+            return true;
+        }
 
-                showMessage('Account created successfully!', 'success');
-                console.log('Sign-up attempt:', { name, email, password });
-            });
-        });
+        function validateRegisterForm() {
+            const username = document.getElementById('register-username').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value.trim();
+            const role = document.getElementById('register-role').value;
+
+            if (!username || !email || !password || !role) {
+                showError("All registration fields are required.");
+                return false;
+            }
+            if (!email.includes('@')) {
+                showError("Please enter a valid email.");
+                return false;
+            }
+            if (password.length < 6) {
+                showError("Password must be at least 6 characters.");
+                return false;
+            }
+
+            return true;
+        }
+
+        function showError(message) {
+            document.getElementById('error-msg').innerText = message;
+        }
     </script>
-
-</div>
-
 </div>
 </body>
 <footer class="footer" style="background-color: #f1f3f5; text-align: center;padding: 2rem;margin-top: auto;font-size: 0.9rem;color: #666;">

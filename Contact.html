@@ -1,6 +1,120 @@
 <!DOCTYPE html>
 <header>
     <link rel="stylesheet" type="text/css" href="M-C-S.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+    <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 1200px;
+      margin: 3rem auto;
+      padding: 20px;
+      gap: 2rem;
+    }
+
+    .contact-form {
+      flex: 1;
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    .contact-form h2 {
+      margin-bottom: 15px;
+      border-left: 3px solid red;
+      padding-left: 10px;
+      font-weight: 600;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-bottom: 1px solid #ccc;
+      background: transparent;
+    }
+
+    .contact-form textarea {
+      height: 100px;
+      resize: none;
+    }
+
+    .contact-form .checkbox {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .contact-form button {
+      margin-top: 20px;
+      background: transparent;
+      border: none;
+      color: red;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .branch-info {
+      flex: 1;
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    .branch-info h2 {
+      font-weight: 700;
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+
+    .branch-section {
+      border-top: 1px solid #eee;
+      padding: 15px 0;
+    }
+
+    .branch-section:first-of-type {
+      border-top: none;
+    }
+
+    .branch-title {
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    .branch-desc {
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .branch-desc strong {
+      display: block;
+      margin-top: 10px;
+      color: red;
+    }
+
+    @media screen and (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+    }
+  </style>
 </header>
 
 <body>
@@ -16,6 +130,58 @@
     <p class="subtitle">Empowering Expectant Mothers Through Digital Awareness</p>
 </div>
 <div class="contactbody">
+<div class="container">
+  <div class="contact-form">
+    <h2>Contact Us</h2>
+    <p>We value communication and timely support. Leave your details below and our team will reach out.</p>
+
+    <form method="POST" action="/contact">
+      <input type="text" name="name" placeholder="Name" required>
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="text" name="company" placeholder="Company Name (optional)">
+      <textarea name="message" placeholder="Message" required></textarea>
+
+      <label class="checkbox">
+        <input type="checkbox" required> By ticking, you agree to our terms and conditions.
+      </label>
+
+      <button type="submit">Send Message</button>
+    </form>
+  </div>
+
+  <!-- Branch Info -->
+  <div class="branch-info">
+    <h2>Our Branches<span style="color: red;">.</span></h2>
+
+    <div class="branch-section">
+      <div class="branch-title">Our Nairobi Office</div>
+      <div class="branch-desc">
+        Our Nairobi office stands on strong foundations of timely service and diligence. We strive to provide the best care despite any odds.
+        <strong>Victor House, 5th Floor<br>17 Kimathi Street</strong>
+        <strong>Email: consult@maternal-care.org</strong>
+        <strong>Call: 0757298148 | 0103790148 </strong>
+      </div>
+    </div>
+
+    <div class="branch-section">
+      <div class="branch-title">Our Nakuru Office</div>
+      <div class="branch-desc">
+        Details available on request.
+      </div>
+    </div>
+
+    <div class="branch-section">
+      <div class="branch-title">Our Eldoret Office</div>
+      <div class="branch-desc">
+        Details available on request.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
 
 </div>
 </body>

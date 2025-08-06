@@ -142,39 +142,73 @@ body {
   padding: 1.5rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
-/* Custom font and basic styles */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+ .loginbody {
+  font-family: Arial, sans-serif;
+  background: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+ }
 
-.loginbody {
-    font-family: 'Inter', sans-serif;
-    background-color: #f3f4f6;
+.container {
+  width: 420px;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-.form-container {
-    transition: all 0.5s ease-in-out;
+h2 {
+  text-align: center;
+  color: #160be4;
+  margin-bottom: 1rem;
 }
 
-.show {
-    display: block;
+form {
+   display: flex;
+  flex-direction: column;
 }
 
-.hide {
-    display: none;
+input, select {
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
-.input-group input:focus + label,
-.input-group input:not(:placeholder-shown) + label {
-    transform: translateY(-24px) scale(0.8);
-    color: #4f46e5;
-    padding: 0 5px;
-    background-color: white;
+button {
+  background:  #160be4;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
 }
 
-.input-group label {
-    transition: all 0.2s ease-in-out;
-    pointer-events: none;
-    position: absolute;
-    left: 12px;
-    top: 12px;
-    color: #6b7280;
+button:hover {
+  background: #160be4;
+}
+
+.toggle-link {
+  text-align: center;
+  margin-top: 1rem;
+  color: #555;
+  cursor: pointer;
+}
+
+.toggle-link:hover {
+  text-decoration: underline;
+}
+
+.hidden {
+  display: none;
+}
+
+.error {
+  color: red;
+  font-size: 0.9em;
+  text-align: center;
 }
