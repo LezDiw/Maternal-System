@@ -37,11 +37,11 @@ def login():
 
             # Role-based redirect (optional)
             if role == "Patient":
-                return redirect(f"/patient/{user_id}")
-            elif role == "Family":
-                return "Family dashboard coming soon..."
-            elif role == "Healthcare":
-                return "Healthcare dashboard coming soon..."
+    return redirect("/Patient.html")
+elif role == "Healthcare Provider":
+    return redirect("/HealthCareProvider.html")
+elif role == "Family/Friends":
+    return redirect("/FamilyFriend.html")
 
     return "Invalid login credentials."
 @app.route('/register', methods=['POST'])
@@ -83,4 +83,6 @@ def register():
     cur.close()
 
     return redirect('/login')
+    
+
 

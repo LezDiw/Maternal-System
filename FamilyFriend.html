@@ -3,20 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Healthcare Provider Dashboard</title>
+<title>Family/Friends Dashboard</title>
 <style>
     body { font-family: Arial, sans-serif; margin: 0; background: #f9fafb; }
     header { background: #2a6f97; color: white; padding: 1rem; text-align: center; }
     .dashboard { display: flex; flex-wrap: wrap; padding: 1rem; gap: 1rem; }
-    .patients-section, .communication-section {
+    .updates-section, .communication-section {
         background: white; border-radius: 8px; padding: 1rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-    .patients-section { flex: 2; min-width: 350px; }
+    .updates-section { flex: 2; min-width: 350px; }
     .communication-section { flex: 1; min-width: 300px; display: flex; flex-direction: column; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 0.5rem; border-bottom: 1px solid #ddd; }
-    th { background: #2a6f97; color: white; }
+    .update-card {
+        background: #f4f8fb; border-left: 5px solid #2a6f97; padding: 0.8rem;
+        margin-bottom: 0.5rem; border-radius: 4px;
+    }
     .chat-tabs { display: flex; margin-bottom: 0.5rem; }
     .tab-btn { flex: 1; padding: 0.5rem; cursor: pointer; background: #ddd; border: none; }
     .tab-btn.active { background: #2a6f97; color: white; }
@@ -32,76 +33,52 @@
 </head>
 <body>
 <header>
-    <h1>Maternal Care System - Healthcare Provider Dashboard</h1>
+    <h1>Maternal Care System - Family & Friends Dashboard</h1>
 </header>
 
 <main class="dashboard">
-    <!-- Left: Patient Management -->
-    <section class="patients-section">
-        <h2>My Patients</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Patient Name</th>
-                    <th>Condition</th>
-                    <th>Next Visit</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="patientList">
-                <tr>
-                    <td>Mary Wanjiku</td>
-                    <td>Normal Pregnancy</td>
-                    <td>2025-08-15</td>
-                    <td><button onclick="viewPatient('Mary Wanjiku')">View</button></td>
-                </tr>
-                <tr>
-                    <td>Jane Doe</td>
-                    <td>High Blood Pressure</td>
-                    <td>2025-08-13</td>
-                    <td><button onclick="viewPatient('Jane Doe')">View</button></td>
-                </tr>
-            </tbody>
-        </table>
+    <!-- Left: Patient Updates -->
+    <section class="updates-section">
+        <h2>Patient Updates</h2>
+        <div class="update-card">
+            <strong>Mary Wanjiku</strong> - 15 weeks pregnant.  
+            Next hospital visit: 15 Aug 2025.
+        </div>
+        <div class="update-card">
+            <strong>Jane Doe</strong> - Doctor reported high blood pressure.  
+            Needs check-up on 13 Aug 2025.
+        </div>
     </section>
 
     <!-- Right: Communication & Alerts -->
     <section class="communication-section">
         <div class="chat-tabs">
-            <button class="tab-btn active" data-tab="patientChat">Patients</button>
-            <button class="tab-btn" data-tab="providerChat">Other Providers</button>
+            <button class="tab-btn active" data-tab="patientChat">Chat with Patient</button>
             <button class="tab-btn" data-tab="aiChat">AI Assistant</button>
         </div>
 
         <!-- Chat Windows -->
         <div class="chat-window active" id="patientChat">
             <div class="chat-messages" id="patientMessages"></div>
-            <input type="text" id="patientInput" placeholder="Type message to patient...">
+            <input type="text" id="patientInput" placeholder="Send message to patient...">
             <button class="send-btn" onclick="sendMessage('patient')">Send</button>
-        </div>
-
-        <div class="chat-window" id="providerChat">
-            <div class="chat-messages" id="providerMessages"></div>
-            <input type="text" id="providerInput" placeholder="Type message to other providers...">
-            <button class="send-btn" onclick="sendMessage('provider')">Send</button>
         </div>
 
         <div class="chat-window" id="aiChat">
             <div class="chat-messages" id="aiMessages"></div>
-            <input type="text" id="aiInput" placeholder="Ask AI Assistant...">
+            <input type="text" id="aiInput" placeholder="Ask AI for pregnancy tips...">
             <button class="send-btn" onclick="sendMessage('ai')">Send</button>
         </div>
 
         <!-- Alerts -->
         <div class="alerts-section">
-            <h3>Critical Alerts</h3>
+            <h3>Alerts</h3>
             <ul id="alertList">
-                <li>Jane Doe - High BP detected (Possible preeclampsia)</li>
+                <li>Jane Doe - High BP reported. Monitor closely.</li>
             </ul>
             <h3>Reminders</h3>
             <ul id="reminderList">
-                <li>Follow up with Mary Wanjiku - 15 Aug 2025</li>
-                <li>Check lab results for Jane Doe</li>
+                <li>Accompany Mary Wanjiku to clinic on 15 Aug 2025</li>
             </ul>
         </div>
     </section>
@@ -118,7 +95,7 @@
         });
     });
 
-    // Send message simulation
+    // Send messages
     function sendMessage(type) {
         const input = document.getElementById(`${type}Input`);
         const messagesDiv = document.getElementById(`${type}Messages`);
@@ -137,19 +114,12 @@
         }
     }
 
-    // AI assistant responses
+    // Simple AI responses
     function generateAIResponse(q) {
         const lowerQ = q.toLowerCase();
-        if (lowerQ.includes('bp') || lowerQ.includes('blood pressure')) 
-            return "Monitor closely and consider antihypertensive management. Schedule immediate review.";
-        if (lowerQ.includes('bleeding')) 
-            return "Advise urgent referral for possible obstetric emergency.";
-        return "I recommend reviewing the latest maternal care guidelines.";
-    }
-
-    // View patient record
-    function viewPatient(name) {
-        alert("Opening record for: " + name);
+        if (lowerQ.includes('visit')) return "Remind the patient to carry all previous medical records.";
+        if (lowerQ.includes('bp') || lowerQ.includes('blood pressure')) return "Encourage them to rest and follow doctor's advice.";
+        return "Support them emotionally and remind them of their next appointment.";
     }
 </script>
 </body>

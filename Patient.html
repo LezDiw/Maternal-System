@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maternal Care Patient Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f9fafb;
+        }
+        header {
+            background: #2a6f97;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 1rem;
+            gap: 1rem;
+        }
+        .form-section, .communication-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .form-section {
+            flex: 2;
+            min-width: 350px;
+        }
+        .communication-section {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        fieldset {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+        }
+        legend {
+            font-weight: bold;
+            color: #2a6f97;
+        }
+        label {
+            display: block;
+            margin-top: 0.5rem;
+        }
+        input, textarea, select, button {
+            width: 100%;
+            padding: 0.5rem;
+            margin-top: 0.2rem;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .submit-btn {
+            background: #2a6f97;
+            color: white;
+            margin-top: 0.5rem;
+            cursor: pointer;
+        }
+        .chat-tabs {
+            display: flex;
+            margin-bottom: 0.5rem;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 0.5rem;
+            cursor: pointer;
+            background: #ddd;
+            border: none;
+        }
+        .tab-btn.active {
+            background: #2a6f97;
+            color: white;
+        }
+        .chat-window {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+        .chat-window.active {
+            display: flex;
+        }
+        .chat-messages {
+            flex: 1;
+            background: #f1f1f1;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            overflow-y: auto;
+            border-radius: 4px;
+        }
+        .send-btn {
+            background: #2a6f97;
+            color: white;
+            cursor: pointer;
+            margin-top: 0.2rem;
+        }
+        .alerts-section {
+            margin-top: 1rem;
+            background: #fff7f7;
+            border-radius: 4px;
+            padding: 0.5rem;
+        }
+        .alerts-section h3 {
+            margin-top: 0;
+        }
+        .alerts-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .alerts-section li {
+            background: #ffe5e5;
+            padding: 0.4rem;
+            margin-bottom: 0.3rem;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Maternal Care System - Patient Dashboard</h1>
+    </header>
+
+    <main class="dashboard">
+        <!-- Left Side: Medical History Form -->
+        <section class="form-section">
+            <h2>Medical History & Current Pregnancy</h2>
+            <form id="medicalForm">
+                <fieldset>
+                    <legend>Personal Information</legend>
+                    <label>Full Name:</label>
+                    <input type="text" name="fullName" required>
+                    <label>Date of Birth:</label>
+                    <input type="date" name="dob" required>
+                    <label>Contact Number:</label>
+                    <input type="tel" name="contact" required>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Medical Background</legend>
+                    <label>Blood Group:</label>
+                    <select name="bloodGroup" required>
+                        <option value="">Select</option>
+                        <option>A+</option><option>A-</option>
+                        <option>B+</option><option>B-</option>
+                        <option>O+</option><option>O-</option>
+                        <option>AB+</option><option>AB-</option>
+                    </select>
+                    <label>Allergies:</label>
+                    <textarea name="allergies"></textarea>
+                    <label>Pre-existing Conditions:</label>
+                    <textarea name="conditions"></textarea>
+                    <label>Previous Complications:</label>
+                    <textarea name="previousComplications"></textarea>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Current Pregnancy</legend>
+                    <label>Weeks of Gestation:</label>
+                    <input type="number" name="gestationWeeks" min="0" max="42">
+                    <label>Current Symptoms:</label>
+                    <textarea name="currentSymptoms" id="currentSymptoms"></textarea>
+                    <label>Current Medications:</label>
+                    <textarea name="medications"></textarea>
+                </fieldset>
+
+                <button type="submit" class="submit-btn">Save Details</button>
+            </form>
+        </section>
+
+        <!-- Right Side: Chat + Alerts -->
+        <section class="communication-section">
+            <div class="chat-tabs">
+                <button class="tab-btn active" data-tab="doctorChat">Doctor</button>
+                <button class="tab-btn" data-tab="mothersChat">Mothers Group</button>
+                <button class="tab-btn" data-tab="aiChat">AI Agent</button>
+            </div>
+
+            <!-- Chat Windows -->
+            <div class="chat-window active" id="doctorChat">
+                <div class="chat-messages" id="doctorMessages"></div>
+                <input type="text" id="doctorInput" placeholder="Type message to Doctor...">
+                <button class="send-btn" onclick="sendMessage('doctor')">Send</button>
+            </div>
+
+            <div class="chat-window" id="mothersChat">
+                <div class="chat-messages" id="mothersMessages"></div>
+                <input type="text" id="mothersInput" placeholder="Type message to Mothers Group...">
+                <button class="send-btn" onclick="sendMessage('mothers')">Send</button>
+            </div>
+
+            <div class="chat-window" id="aiChat">
+                <div class="chat-messages" id="aiMessages"></div>
+                <input type="text" id="aiInput" placeholder="Ask AI Agent about your pregnancy...">
+                <button class="send-btn" onclick="sendMessage('ai')">Send</button>
+            </div>
+
+            <!-- Alerts & Reminders -->
+            <div class="alerts-section">
+                <h3>Alerts</h3>
+                <ul id="alertList"></ul>
+                <h3>Reminders</h3>
+                <ul id="reminderList">
+                    <li>Next ANC visit: 15th August 2025</li>
+                    <li>Blood test: 20th August 2025</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.chat-window').forEach(w => w.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Send messages
+        function sendMessage(type) {
+            const input = document.getElementById(`${type}Input`);
+            const messagesDiv = document.getElementById(`${type}Messages`);
+            const message = input.value.trim();
+            if (message) {
+                messagesDiv.innerHTML += `<div><strong>You:</strong> ${message}</div>`;
+                input.value = '';
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+                if (type === 'ai') {
+                    setTimeout(() => {
+                        messagesDiv.innerHTML += `<div><strong>AI:</strong> ${generateAIResponse(message)}</div>`;
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }, 1000);
+                }
+            }
+        }
+
+        // Simulated AI agent responses
+        function generateAIResponse(question) {
+            const lowerQ = question.toLowerCase();
+            if (lowerQ.includes('headache')) return "Headaches can be common, but if severe, consult your doctor immediately.";
+            if (lowerQ.includes('bleeding')) return "Bleeding during pregnancy requires urgent medical attention. Visit your hospital immediately.";
+            return "I understand your concern. Please consult your healthcare provider for personalized advice.";
+        }
+
+        // Symptom alert system
+        document.getElementById('currentSymptoms').addEventListener('input', function () {
+            const symptoms = this.value.toLowerCase();
+            const alertList = document.getElementById('alertList');
+            alertList.innerHTML = '';
+
+            const dangerSigns = [
+                { keyword: 'bleeding', message: 'Possible miscarriage or placenta issues — seek urgent care.' },
+                { keyword: 'severe headache', message: 'Could indicate preeclampsia — consult your doctor immediately.' },
+                { keyword: 'swelling', message: 'Swelling in face/hands may be a sign of high blood pressure.' }
+            ];
+
+            dangerSigns.forEach(sign => {
+                if (symptoms.includes(sign.keyword)) {
+                    const li = document.createElement('li');
+                    li.textContent = sign.message;
+                    alertList.appendChild(li);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
