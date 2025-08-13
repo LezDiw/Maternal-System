@@ -5,10 +5,10 @@ import hashlib
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
 
-# MySQL configuration (adjust as needed)
+# MySQL configuration
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
+app.config['MYSQL_PASSWORD'] = 'E_lizabeth03'
 app.config['MYSQL_DB'] = 'maternal_care_system'
 
 mysql = MySQL(app)
@@ -36,12 +36,7 @@ def login():
             session['role'] = role
 
             # Role-based redirect (optional)
-            if role == "Patient":
-    return redirect("/Patient.html")
-elif role == "Healthcare Provider":
-    return redirect("/HealthCareProvider.html")
-elif role == "Family/Friends":
-    return redirect("/FamilyFriend.html")
+           
 
     return "Invalid login credentials."
 @app.route('/register', methods=['POST'])
