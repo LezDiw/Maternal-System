@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <header>
-    <link rel="stylesheet" type="text/css" href="M-C-S.css" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/M-C-S.css') }}" />
 </header>
 
 <body>
 <div class="head">
     <h1 class= "logo">Her<br /> &nbsp; Rise</h1>
     <div class='headerlinks'>
-    <a href="M-C-S.html" class="headerlink">Home</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-    <a href="About.html" class="headerlink">About Us</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-    <a href="Contact.html" class="headerlink">Contact Us</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-    <button class='btn1'><a href='Login.html'class='headerlink1'>LOG IN</a></button>
+    <a href="{{ url_for('home_page') }}" class="headerlink">Home</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+    <a href="{{ url_for('about_page') }}" class="headerlink">About Us</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+    <a href="{{ url_for('contact_page') }}" class="headerlink">Contact Us</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+    <button class='btn1'><a href="{{ url_for('login_page') }}"class='headerlink1'>LOG IN</a></button>
     </div> <br/>
     <marquee behavior="alternate" direction="right" width="75%" margin="40%"><h1 class="title">Digitized Maternal Care</h1></marquee>
     <p class="subtitle">Empowering Expectant Mothers Through Digital Awareness</p>

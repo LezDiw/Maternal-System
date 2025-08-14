@@ -1,44 +1,67 @@
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL
-import hashlib
+import MySQLdb.cursors
+import re
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key'
+app.secret_key = 'yoursecretkey'
 
 # MySQL configuration
 app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'E_lizabeth03'
+app.config['MYSQL_USER'] = 'root' 
+app.config['MYSQL_PASSWORD'] = 'E_lizabeth03' 
 app.config['MYSQL_DB'] = 'maternal_care_system'
 
 mysql = MySQL(app)
-@app.route('/login', methods=['GET'])
+
+@app.route('/')
+def home_page():
+    return render_template('M-C-S.html') 
+
+@app.route('/about')
+def about_page():
+    return render_template('About.html') 
+
+@app.route('/contact')
+def contact_page():
+    return render_template('Contact.html')
+
+@app.route('/login-page')
 def login_page():
-    return render_template('Login.html')
+    return render_template('Login.html') 
+
+# Login route
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
     password = request.form['password']
     role = request.form['role']
 
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT id, password_hash, role_id FROM users WHERE username = %s", (username,))
-    user = cur.fetchone()
-    cur.close()
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute(
+        "SELECT * FROM users WHERE username=%s AND password=%s AND role=%s",
+        (username, password, role)
+    )
+    user = cursor.fetchone()
 
     if user:
-        user_id, stored_hash, stored_role_id = user
-        input_hash = hashlib.sha256(password.encode()).hexdigest()
+        session['loggedin'] = True
+        session['id'] = user['id']
+        session['username'] = user['username']
+        session['role'] = user['role']
 
-        if input_hash == stored_hash:
-            session['user_id'] = user_id
-            session['username'] = username
-            session['role'] = role
+        # Redirect based on role
+        if role == "Patient":
+            return redirect(url_for('patient_dashboard'))
+        elif role == "Family":
+            return redirect(url_for('family_dashboard'))
+        elif role == "Healthcare":
+            return redirect(url_for('healthcare_dashboard'))
+    else:
+        flash("Incorrect username, password, or role", "error")
+        return redirect(url_for('home'))
 
-            # Role-based redirect (optional)
-           
-
-    return "Invalid login credentials."
+# Registration route
 @app.route('/register', methods=['POST'])
 def register():
     username = request.form['username']
@@ -46,38 +69,52 @@ def register():
     password = request.form['password']
     role = request.form['role']
 
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-    cur = mysql.connection.cursor()
+    # Check if username exists
+    cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
+    account = cursor.fetchone()
 
-    # Get or insert role into roles table
-    cur.execute("SELECT id FROM roles WHERE role_name = %s", (role,))
-    role_row = cur.fetchone()
-
-    if not role_row:
-        cur.execute("INSERT INTO roles (role_name) VALUES (%s)", (role,))
+    if account:
+        flash("Username already exists", "error")
+        return redirect(url_for('home'))
+    elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+        flash("Invalid email address", "error")
+        return redirect(url_for('home'))
+    elif not username or not password or not email or not role:
+        flash("Please fill out the form completely", "error")
+        return redirect(url_for('home'))
+    else:
+        cursor.execute(
+            "INSERT INTO users (username, email, password, role) VALUES (%s, %s, %s, %s)",
+            (username, email, password, role)
+        )
         mysql.connection.commit()
-        cur.execute("SELECT id FROM roles WHERE role_name = %s", (role,))
-        role_row = cur.fetchone()
+        flash("You have successfully registered!", "success")
+        return redirect(url_for('home'))
 
-    role_id = role_row[0]
+# Dashboards
+@app.route('/patient')
+def patient_dashboard():
+    return render_template('Patient.html')
 
-    # Check for duplicate username/email
-    cur.execute("SELECT * FROM users WHERE username = %s OR email = %s", (username, email))
-    if cur.fetchone():
-        cur.close()
-        return "Username or email already exists."
+@app.route('/family')
+def family_dashboard():
+    return render_template('FamilyFriend.html')
 
-    # Insert into users table
-    cur.execute("""
-        INSERT INTO users (username, email, password_hash, role_id, full_name)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (username, email, password_hash, role_id, username))
+@app.route('/healthcare')
+def healthcare_dashboard():
+    return render_template('HealthCareProvider.html')
 
-    mysql.connection.commit()
-    cur.close()
+# Logout
+@app.route('/logout')
+def logout():
+    session.pop('loggedin', None)
+    session.pop('id', None)
+    session.pop('username', None)
+    session.pop('role', None)
+    flash("You have been logged out", "info")
+    return redirect(url_for('home'))
 
-    return redirect('/login')
-    
-
-
+if __name__ == '__main__':
+    app.run(debug=True)
