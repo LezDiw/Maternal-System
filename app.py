@@ -6,6 +6,7 @@ import re
 app = Flask(__name__)
 app.secret_key = 'yoursecretkey'
 
+
 # MySQL configuration
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root' 
@@ -39,7 +40,7 @@ def login():
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute(
-        "SELECT * FROM users WHERE username=%s AND password=%s AND role=%s",
+        "SELECT * FROM users WHERE username=%s AND password_hash=%s AND role_id=%s",
         (username, password, role)
     )
     user = cursor.fetchone()
@@ -57,9 +58,10 @@ def login():
             return redirect(url_for('family_dashboard'))
         elif role == "Healthcare":
             return redirect(url_for('healthcare_dashboard'))
-    else:
-        flash("Incorrect username, password, or role", "error")
-        return redirect(url_for('home'))
+        else:
+        # Add the else block here to handle the case where the user is not found.
+            flash("Incorrect username, password, or role", "error")
+        return redirect(url_for('login-page')) # Correctly redirect back to the login page
 
 # Registration route
 @app.route('/register', methods=['POST'])
@@ -77,21 +79,21 @@ def register():
 
     if account:
         flash("Username already exists", "error")
-        return redirect(url_for('home'))
+        return redirect(url_for('home_page'))
     elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
         flash("Invalid email address", "error")
-        return redirect(url_for('home'))
+        return redirect(url_for('home_page'))
     elif not username or not password or not email or not role:
         flash("Please fill out the form completely", "error")
-        return redirect(url_for('home'))
+        return redirect(url_for('home_page'))
     else:
         cursor.execute(
-            "INSERT INTO users (username, email, password, role) VALUES (%s, %s, %s, %s)",
+            "INSERT INTO users (username, email, password_hash, role_id) VALUES (%s, %s, %s, %s)",
             (username, email, password, role)
         )
         mysql.connection.commit()
         flash("You have successfully registered!", "success")
-        return redirect(url_for('home'))
+        return redirect(url_for('home_page'))
 
 # Dashboards
 @app.route('/patient')
@@ -114,7 +116,7 @@ def logout():
     session.pop('username', None)
     session.pop('role', None)
     flash("You have been logged out", "info")
-    return redirect(url_for('home'))
+    return redirect(url_for('home_page'))
 
 if __name__ == '__main__':
     app.run(debug=True)

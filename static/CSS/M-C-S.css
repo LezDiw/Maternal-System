@@ -9,9 +9,10 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+
 }
 .head {
-    background-image: url(Background2.png);
+  background-image: url('../images/Background2.png');
   background-color: #0a66f0;
   color: rgb(56, 21, 215);
   padding: 2rem;
