@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digitized Maternal Care</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/M-C-S.css') }}" />
+</head>
+<body>
+<!-- HEADER -->
+<div class="head">
+    <h1 class="logo">Her<br /> &nbsp; Rise</h1>
+    <div class='headerlinks'>
+        <a href="{{ url_for('home_page') }}" class="headerlink">Home</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+        <a href="{{ url_for('about_page') }}" class="headerlink">About Us</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+        <a href="{{ url_for('contact_page') }}" class="headerlink">Contact Us</a> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+        <button class='btn1'><a href="{{ url_for('login_page') }}" class='headerlink1'>LOG IN</a></button>
+    </div> <br/>
+    <h1 class="title">Digitized Maternal Care</h1>
+    <p class="subtitle">Empowering Expectant Mothers Through Digital Awareness</p>
+</div>
+
+
+<div class="loginbody" style="display: flex; justify-content: center; align-items: center; padding: 40px; background-color: #f9fafb;">
+    <div class="container" style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px;">
+        <h2 id="form-title" style="font-size: 28px; font-weight: bold; text-align: center; margin-bottom: 20px; color: #2a40e6;">Login</h2>
+
+        <!-- Login Form -->
+        <form id="login-form" method="POST" action="/login" onsubmit="return validateLoginForm()" style="display: flex; flex-direction: column; gap: 15px;">
+            <input type="text" name="username" id="login-username" placeholder="Username" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
+            <input type="password" name="password" id="login-password" placeholder="Password" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
+            <select name="role" id="login-role" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
+                <option value="">-- Select Role --</option>
+                <option value="Patient">Patient</option>
+                <option value="Family">Family of Expectant Mother</option>
+                <option value="Healthcare">Healthcare Provider</option>
+            </select>
+            <button type="submit" style="background-color: #2a40e6; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer;">Login</button>
+            <div class="toggle-link" onclick="toggleForm()" style="text-align: center; color: #2a40e6; cursor: pointer; font-size: 14px;">Don't have an account? Register</div>
+        </form>
+
+        <!-- Registration Form -->
+        <form id="register-form" class="hidden" method="POST" action="/register" onsubmit="return validateRegisterForm()" style="display: none; flex-direction: column; gap: 15px;">
+            <input type="text" name="username" id="register-username" placeholder="Choose a Username" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
+            <input type="email" name="email" id="register-email" placeholder="Enter Email" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
+            <input type="password" name="password" id="register-password" placeholder="Create Password" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
+            <select name="role" id="register-role" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
+                <option value="">-- Select Role --</option>
+                <option value="Patient">Patient</option>
+                <option value="Family">Family of Expectant Mother</option>
+                <option value="Healthcare">Healthcare Provider</option>
+            </select>
+            <button type="submit" style="background-color: #2a40e6; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer;">Create Account</button>
+            <div class="toggle-link" onclick="toggleForm()" style="text-align: center; color: #2a40e6; cursor: pointer; font-size: 14px;">Already have an account? Login</div>
+        </form>
+
+        <div id="error-msg" class="error" style="color: red; font-size: 14px; text-align: center; margin-top: 10px;"></div>
+    </div>
+</div>
+
+<!-- JAVASCRIPT  -->
+<script>
+    function toggleForm() {
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const formTitle = document.getElementById('form-title');
+        const errorMsg = document.getElementById('error-msg');
+
+        loginForm.style.display = loginForm.style.display === 'none' ? 'flex' : 'none';
+        registerForm.style.display = registerForm.style.display === 'none' ? 'flex' : 'none';
+
+        if (loginForm.style.display === 'none') {
+            formTitle.innerText = 'Create Account';
+        } else {
+            formTitle.innerText = 'Login';
+        }
+        errorMsg.innerText = '';
+    }
+
+    function validateLoginForm() {
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value.trim();
+        const role = document.getElementById('login-role').value;
+
+        if (!username || !password || !role) {
+            showError("All login fields are required.");
+            return false;
+        }
+        return true;
+    }
+
+    function validateRegisterForm() {
+        const username = document.getElementById('register-username').value.trim();
+        const email = document.getElementById('register-email').value.trim();
+        const password = document.getElementById('register-password').value.trim();
+        const role = document.getElementById('register-role').value;
+
+        if (!username || !email || !password || !role) {
+            showError("All registration fields are required.");
+            return false;
+        }
+        if (!email.includes('@')) {
+            showError("Please enter a valid email.");
+            return false;
+        }
+        if (password.length < 6) {
+            showError("Password must be at least 6 characters.");
+            return false;
+        }
+        return true;
+    }
+
+    function showError(message) {
+        document.getElementById('error-msg').innerText = message;
+    }
+</script>
+
+<!-- FOOTER -->
+<footer class="footer" style="background-color: #f1f3f5; text-align: center; padding: 2rem; margin-top: auto; font-size: 0.9rem; color: #666;">
+    <h2 style="text-align: center; color: rgb(42, 64, 230); padding: 25px; font-size: 30px;"><b><u>Our Location</u></b></h2>
+    <iframe src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d3988.8445068397577!2d36.667343024482854!3d-1.2659244856031835!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1spcea%20kikuyu%20hospital!5e0!3m2!1sen!2ske!4v1754146258752!5m2!1sen!2ske" width="1500px" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <h1 style="text-align: center; padding: 2rem; font-weight: bold; font-size: large; color: blue;">SUBSCRIBE TO OUR WEEKLY NEWS</h1>
+    <input class='footerinput' type="email" placeholder='EMAIL' /> <br/> <br/>
+    <button class='footerbtn1' style="padding: 2rem">SUBSCRIBE</button>
+    <p>&copy; 2025 Digitized Maternal Care System | Powered by Community and Innovation</p>
+</footer>
+</body>
+</html>
