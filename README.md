@@ -496,3 +496,111 @@ Control flow defines the sequence of operations and decisions within the system.
 3.9 Physical Design
 
 The physical design stage focuses on the tangible aspects of the system, transforming the logical blueprint into a detailed plan for implementation. This involves selecting specific hardware and software platforms, defining database structures, designing user interfaces, and outlining deployment considerations.
+CHAPTER 4: SYSTEM IMPLEMENTATION AND TESTING, CONCLUSIONS AND RECOMMENDATIONS.
+4.1 Introduction
+This chapter presents the implementation process of the system, detailing the environment and tools used, code generation procedures, and the testing strategies adopted. It also provides a user guide to assist system users, followed by conclusions on the study’s outcomes and recommendations for future improvements.
+4.2 Environment and Tools
+
+Frontend (Presentation Layer)
+•	Languages: HTML5, CSS3, JavaScript
+•	Styling: Custom CSS, responsive design for mobile and desktop
+•	Features: Role-based interface display, multilingual support, interactive forms, and alert notifications via JavaScript
+Backend (Business Logic Layer)
+•	Language: Python
+•	Framework: Flask – lightweight, flexible, and suitable for rapid development
+•	Features: RESTful API endpoints, user authentication, role-based access control, alert generation, and scheduling functions
+Database (Data Layer)
+•	DBMS: MySQL
+•	Connection Library: Flask-MySQLdb and PyMySQL for Python
+•	Data Handling: Structured schema for users, patient records, appointments, alerts, and messages
+Middleware / API Integration
+•	Flask API routes connect frontend requests to backend logic
+•	AJAX calls from JavaScript send and retrieve data without page reloads
+Development & Collaboration Tools
+•	Version Control: Git and GitHub for source code management
+•	Testing: Postman for API testing, Selenium for automated UI tests
+•	IDE: Visual Studio Code for both frontend and backend code editing
+Hosting Environment
+•	Development: Localhost using Flask’s built-in server
+•	Future Deployment: AWS EC2 or PythonAnywhere with MySQL hosting
+4.3 System Code Generation
+
+Implementation Process
+1.	Database Creation: MySQL database and tables designed using ERD principles.
+
+i.	Backend Development: Flask routes for patient registration, ANC/PNC data, risk assessment, and alerts.
+ii.	Frontend Development: HTML/CSS layouts and JavaScript scripts for dynamic form handling and AJAX calls.
+iii.	Integration: JavaScript fetch() calls communicate with Flask API routes.
+iv.	Security Implementation: Login authentication, password hashing, and session management in Flask.
+Example Code Snippet – Flask Patient Registration Route:
+@app.route('/register_patient', methods=['POST'])
+def register_patient():
+    name = request.form['name']
+    age = request.form['age']
+    history = request.form['history']
+    cur = mysql.connection.cursor()
+    cur.execute("INSERT INTO patients(name, age, history) VALUES(%s, %s, %s)", (name, age, history))
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({'message': 'Patient registered successfully'})
+
+4.4 Testing
+
+4.4.1 Black Box Testing
+Verify the functionality of the system without looking at internal code structures. The tester interacts with the system via the user interface and API endpoints, providing inputs and validating outputs against expected results.
+Test ID	Test Case	Input Data	Expected Output	Actual Output	Status
+					
+BB001	Patient Registration	Valid patient details	Success message, data stored in MySQL	Success message, record stored	Pass
+BB002	Invalid Login	Wrong username/password	Error message	Error message displayed	Pass
+BB003	Alert Trigger	BP = 160/100	“High Risk” alert generated	Alert displayed	Pass
+BB004	Forum Message Posting	Text message from patient	Message appears in thread	Message displayed	Pass
+
+4.4.2 White Box Testing
+Test the internal structures and logic of the backend Flask application to ensure correct code execution, database interactions, and security measures. This was done using pytest and manual code inspection.
+Test ID	Component Tested	Test Description	Expected Result	Actual Result	Status
+WB001	/register_patient route	Check SQL query inserts data correctly	Data saved to patients table	Data saved successfully	Pass
+WB002	Risk Calculation Function	BP & history-based scoring logic	Correct score & alert generated	Works as expected	Pass
+WB003	Session Management	Unauthorized access to protected route	Redirect to login	Redirected	Pass
+WB004	Input Validation	Missing required fields in POST	Returns 400 error	Returns 400 error	Pass
+
+4.4.3 User Acceptance Testing
+Ensure that the system meets user expectations and performs well in real-life usage scenarios. UAT was performed with healthcare staff, expectant mothers, and admin users.
+Test ID	Scenario	User Action	Expected Result	Actual Result	Status
+UAT001	New Patient Registration	Fill and submit registration form	Confirmation message, record visible patient list	Works as expected	Pass
+UAT002	High-Risk Alert Response	Doctor views alert dashboard	Alert details visible, action recorded	Works as expected	Pass
+UAT003	Forum Interaction	Patient posts question in peer support forum	Message posted and visible to other patients	Works as expected	Pass
+UAT004	Appointment Scheduling	Doctor schedules ANC visit	Appointment visible on patient dashboard	Works as expected	Pass
+
+4.5 User Guide
+
+System Requirements
+•	Browser: Chrome/Firefox (latest)
+•	Internet Connection: Minimum 2 Mbps (offline mode for some features)
+•	Device: Smartphone, tablet, or PC
+Installation & Setup
+1.	Install Python and MySQL/XAMPP
+2.	Install required Python packages:
+3.	pip install flask flask-mysqldb pymysql
+4.	Import maternal_care.sql into MySQL
+5.	Run Flask app:
+6.	python app.py
+7.	Access in browser: http://localhost:5000
+Usage Instructions
+•	Patients: Register, update ANC/PNC details, receive alerts, access support forums
+•	Healthcare Providers: View/update records, track partographs, send educational messages
+4.6 Conclusions
+
+The system achieved its goal of creating a functional Digitized Hospital-Based Maternal Care System that:
+•	Detects and alerts on maternal health risks
+•	Facilitates faster communication between patients and providers
+•	Provides an accessible platform for education and peer support
+Limitations
+•	Not yet integrated with national EHR systems
+•	Limited AI features in this version
+•	Requires continuous training for optimal use
+4.7 Recommendations
+1.	Integrate with national hospital EHRs for seamless data sharing
+2.	Develop a mobile app with offline-first features
+3.	Expand AI predictive analytics for earlier risk detection
+4.	Deploy on cloud infrastructure for scalability
+5.	Conduct regular training workshops for users
