@@ -35,13 +35,22 @@ def login_page():
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
-    password = request.form['password']
+    password = request.form['password_hash']
     role = request.form['role']
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    # Look up role_id from role_name
+    cursor.execute("SELECT id FROM roles WHERE role_name=%s", (role,))
+    role_row = cursor.fetchone()
+    if not role_row:
+        flash("Invalid role", "error")
+        return redirect(url_for('login_page'))
+
+    role_id = role_row['id']
+
     cursor.execute(
         "SELECT * FROM users WHERE username=%s AND password_hash=%s AND role_id=%s",
-        (username, password, role)
+        (username, password, role_id)
     )
     user = cursor.fetchone()
 
@@ -49,26 +58,25 @@ def login():
         session['loggedin'] = True
         session['id'] = user['id']
         session['username'] = user['username']
-        session['role'] = user['role']
+        session['role'] = user['role_id']
 
         # Redirect based on role
         if role == "Patient":
             return redirect(url_for('patient_dashboard'))
-        elif role == "Family":
+        elif role == "Family of Expectant Mother":
             return redirect(url_for('family_dashboard'))
-        elif role == "Healthcare":
+        elif  role== "Healthcare Provider":
             return redirect(url_for('healthcare_dashboard'))
         else:
-        # Add the else block here to handle the case where the user is not found.
-            flash("Incorrect username, password, or role", "error")
-        return redirect(url_for('login-page')) # Correctly redirect back to the login page
+         #flash("Incorrect username, password, or role", "error")
+            return redirect(url_for('login-page'))
 
 # Registration route
 @app.route('/register', methods=['POST'])
 def register():
     username = request.form['username']
     email = request.form['email']
-    password = request.form['password']
+    password = request.form['password_hash']
     role = request.form['role']
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -87,9 +95,18 @@ def register():
         flash("Please fill out the form completely", "error")
         return redirect(url_for('home_page'))
     else:
+        # Look up role_id from roles table
+        cursor.execute("SELECT id FROM roles WHERE role_name=%s", (role,))
+        role_row = cursor.fetchone()
+        if not role_row:
+            flash("Invalid role selected", "error")
+            return redirect(url_for('home_page'))
+
+        role_id = role_row['id']
+
         cursor.execute(
             "INSERT INTO users (username, email, password_hash, role_id) VALUES (%s, %s, %s, %s)",
-            (username, email, password, role)
+            (username, email, password, role_id)
         )
         mysql.connection.commit()
         flash("You have successfully registered!", "success")
