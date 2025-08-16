@@ -4,31 +4,182 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Family/Friends Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f9fafb; }
-    header { background: #2a6f97; color: white; padding: 1rem; text-align: center; }
-    .dashboard { display: flex; flex-wrap: wrap; padding: 1rem; gap: 1rem; }
-    .updates-section, .communication-section {
-        background: white; border-radius: 8px; padding: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    body { 
+        font-family: 'Inter', sans-serif; 
+        margin: 0; 
+        background: #f1f5f9; 
+        color: #1e293b;
     }
-    .updates-section { flex: 2; min-width: 350px; }
-    .communication-section { flex: 1; min-width: 300px; display: flex; flex-direction: column; }
-    .update-card {
-        background: #f4f8fb; border-left: 5px solid #2a6f97; padding: 0.8rem;
-        margin-bottom: 0.5rem; border-radius: 4px;
+    header { 
+        background: #3b82f6; 
+        color: white; 
+        padding: 1rem; 
+        text-align: center; 
+        font-size: 1.5rem;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
     }
-    .chat-tabs { display: flex; margin-bottom: 0.5rem; }
-    .tab-btn { flex: 1; padding: 0.5rem; cursor: pointer; background: #ddd; border: none; }
-    .tab-btn.active { background: #2a6f97; color: white; }
-    .chat-window { display: none; flex-direction: column; flex: 1; }
+    .dashboard { 
+        display: flex; 
+        flex-wrap: wrap; 
+        padding: 2rem; 
+        gap: 2rem; 
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .content-section, .communication-section {
+        background: white; 
+        border-radius: 12px; 
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        min-width: 300px;
+    }
+    .content-section { flex: 2; }
+    .communication-section { flex: 1; display: flex; flex-direction: column; }
+    
+    h2, h3 {
+        font-weight: bold;
+        color: #1e40af;
+        margin-bottom: 1rem;
+    }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
+
+    .chat-tabs { 
+        display: flex; 
+        justify-content: space-around;
+        margin-bottom: 1rem; 
+    }
+    .tab-btn { 
+        flex: 1; 
+        padding: 0.75rem 1.5rem; 
+        cursor: pointer; 
+        background: #e2e8f0; 
+        border: none; 
+        border-radius: 8px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    .tab-btn.active { 
+        background: #3b82f6; 
+        color: white; 
+    }
+    .chat-window { 
+        display: none; 
+        flex-direction: column; 
+        flex: 1; 
+        border: 1px solid #e2e8f0; 
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
     .chat-window.active { display: flex; }
-    .chat-messages { flex: 1; background: #f1f1f1; margin-bottom: 0.5rem; padding: 0.5rem; overflow-y: auto; border-radius: 4px; }
-    .send-btn { background: #2a6f97; color: white; cursor: pointer; margin-top: 0.2rem; }
-    .alerts-section { margin-top: 1rem; background: #fff7f7; border-radius: 4px; padding: 0.5rem; }
-    .alerts-section h3 { margin-top: 0; }
-    .alerts-section ul { list-style: none; padding-left: 0; }
-    .alerts-section li { background: #ffe5e5; padding: 0.4rem; margin-bottom: 0.3rem; border-radius: 4px; }
+    .chat-messages { 
+        flex-grow: 1; 
+        background: #f8fafc; 
+        padding: 0.5rem; 
+        overflow-y: auto; 
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        max-height: 400px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .chat-messages .user-message {
+        background-color: #e2f2ff;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-end;
+        max-width: 80%;
+    }
+    .chat-messages .other-message {
+        background-color: #f0f4f8;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-start;
+        max-width: 80%;
+    }
+    .chat-messages .ai-message {
+        background-color: #f0f4f8;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-start;
+        max-width: 80%;
+    }
+    .chat-input-container {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .chat-input-container input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+    .send-btn { 
+        background: #22c55e; 
+        color: white; 
+        cursor: pointer; 
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    .send-btn:hover { background: #15803d; }
+
+    .alerts-section, .reminders-section { 
+        margin-top: 2rem; 
+        background: #fff7f7; 
+        border-radius: 8px; 
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .alerts-section h3, .reminders-section h3 {
+        color: #ef4444;
+        margin-bottom: 0.5rem;
+    }
+    .alerts-section ul, .reminders-section ul { 
+        list-style: none; 
+        padding-left: 0; 
+    }
+    .alerts-section li, .reminders-section li { 
+        background: #fecaca; 
+        color: #991b1b;
+        padding: 0.75rem; 
+        margin-bottom: 0.5rem; 
+        border-radius: 8px;
+    }
+    
+    .info-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-top: 2rem;
+    }
+    .info-section ul {
+        list-style-type: disc;
+        padding-left: 20px;
+        margin-bottom: 1rem;
+    }
+
+    #loading-indicator {
+        display: none;
+        text-align: center;
+        padding: 1rem;
+        color: #475569;
+    }
+    
+    .footer {
+        text-align: center;
+        padding: 1rem;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
 </style>
 </head>
 <body>
@@ -37,54 +188,255 @@
 </header>
 
 <main class="dashboard">
-    <!-- Left: Patient Updates -->
-    <section class="updates-section">
-        <h2>Patient Updates</h2>
-        <div class="update-card">
-            <strong>Mary Wanjiku</strong> - 15 weeks pregnant.  
-            Next hospital visit: 15 Aug 2025.
-        </div>
-        <div class="update-card">
-            <strong>Jane Doe</strong> - Doctor reported high blood pressure.  
-            Needs check-up on 13 Aug 2025.
-        </div>
+    <!-- Left: Family Support Info -->
+    <section class="content-section">
+        <h2>Supporting Expectant Mothers</h2>
+        <p>Family and friends play a crucial role in ensuring a healthy and happy pregnancy journey. Here are some ways you can provide support, based on best practices in maternal care:</p>
+        
+        <h3>Emotional and Social Support</h3>
+        <ul class="list-disc pl-5 mb-4">
+            <li><strong>Be an active listener:</strong> Let her share her feelings, fears, and joys without judgment. Sometimes, just knowing someone is there to listen can make a huge difference.</li>
+            <li><strong>Encourage self-care:</strong> Remind her to rest, eat well, and engage in light physical activity. Offer to help with chores or errands so she has time for herself.</li>
+            <li><strong>Celebrate milestones:</strong> Acknowledge and celebrate each week or month of the pregnancy. This can help her feel appreciated and excited about the journey.</li>
+        </ul>
+        
+        <h3>Practical Help</h3>
+        <ul class="list-disc pl-5 mb-4">
+            <li><strong>Accompany her to appointments:</strong> Offer to drive her to antenatal care visits. Having a support person can reduce stress and help her remember important information from the doctor.</li>
+            <li><strong>Assist with daily tasks:</strong> Simple gestures like cooking a meal, doing laundry, or grocery shopping can significantly reduce her physical and mental load.</li>
+            <li><strong>Help with planning:</strong> Offer to help prepare for the baby's arrival, whether it's setting up the nursery, buying baby supplies, or planning for a baby shower.</li>
+        </ul>
+        
+        <h3>Watch for Red Flags</h3>
+        <ul class="list-disc pl-5 mb-4">
+            <li>Be aware of the warning signs of complications discussed in the patient dashboard. If she reports symptoms like severe headaches, swelling, or unusual pain, encourage her to contact her doctor or go to the hospital immediately.</li>
+            <li>Stay informed about her health journey through this dashboard's reminders and check-ins (without seeing private updates).</li>
+        </ul>
     </section>
 
     <!-- Right: Communication & Alerts -->
     <section class="communication-section">
         <div class="chat-tabs">
-            <button class="tab-btn active" data-tab="patientChat">Chat with Patient</button>
-            <button class="tab-btn" data-tab="aiChat">AI Assistant</button>
+            <button class="tab-btn active" data-tab="aiChat">AI Assistant</button>
+            <button class="tab-btn" data-tab="patientChat">Chat with Patient</button>
+            <button class="tab-btn" data-tab="doctorChat">Chat with Healthcare Provider</button>
         </div>
 
         <!-- Chat Windows -->
-        <div class="chat-window active" id="patientChat">
-            <div class="chat-messages" id="patientMessages"></div>
-            <input type="text" id="patientInput" placeholder="Send message to patient...">
-            <button class="send-btn" onclick="sendMessage('patient')">Send</button>
-        </div>
-
-        <div class="chat-window" id="aiChat">
+        <div class="chat-window active" id="aiChat">
             <div class="chat-messages" id="aiMessages"></div>
-            <input type="text" id="aiInput" placeholder="Ask AI for pregnancy tips...">
-            <button class="send-btn" onclick="sendMessage('ai')">Send</button>
+            <div id="loading-indicator">AI Assistant is typing...</div>
+            <div class="chat-input-container">
+                <input type="text" id="aiInput" placeholder="Ask AI for support tips...">
+                <button class="send-btn" onclick="sendMessage('ai')">Send</button>
+            </div>
         </div>
 
-        <!-- Alerts -->
-        <div class="alerts-section">
-            <h3>Alerts</h3>
-            <ul id="alertList">
-                <li>Jane Doe - High BP reported. Monitor closely.</li>
-            </ul>
+        <div class="chat-window" id="patientChat">
+            <div class="chat-messages" id="patientMessages"></div>
+            <div class="chat-input-container">
+                <input type="text" id="patientInput" placeholder="Send message to patient...">
+                <button class="send-btn" onclick="sendMessage('patient')">Send</button>
+            </div>
+        </div>
+        
+        <div class="chat-window" id="doctorChat">
+            <div class="chat-messages" id="doctorMessages"></div>
+            <div class="chat-input-container">
+                <input type="text" id="doctorInput" placeholder="Send message to healthcare provider...">
+                <button class="send-btn" onclick="sendMessage('doctor')">Send</button>
+            </div>
+        </div>
+
+        <!-- Reminders -->
+        <div class="reminders-section">
             <h3>Reminders</h3>
             <ul id="reminderList">
-                <li>Accompany Mary Wanjiku to clinic on 15 Aug 2025</li>
+                <!-- Reminders will be dynamically added here -->
             </ul>
         </div>
     </section>
 </main>
 
-<script>
+<div class="footer">
+    <p id="userIdDisplay">User ID: N/A</p>
+</div>
+
+<!-- Firebase SDK Scripts -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, collection, onSnapshot, serverTimestamp, addDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Global variables provided by the environment
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    let db, auth, userId;
+    let isAuthReady = false;
+
+    // Initialize Firebase and handle authentication
+    const initFirebase = async () => {
+        if (Object.keys(firebaseConfig).length === 0) {
+            console.error("Firebase config is missing.");
+            return;
+        }
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                isAuthReady = true;
+                console.log("User authenticated:", userId);
+                document.getElementById('userIdDisplay').textContent = `Your User ID: ${userId}`;
+                setupRealtimeListeners();
+            } else {
+                console.log("No user authenticated. Signing in...");
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Authentication failed:", error);
+                }
+            }
+        });
+    };
+
+    initFirebase();
+
+    // Set up real-time listeners for chat and reminders
+    const setupRealtimeListeners = () => {
+        if (!isAuthReady) return;
+
+        // Patient Chat Listener
+        const patientChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'patient', 'messages');
+        onSnapshot(patientChatQuery, (snapshot) => {
+            const messagesDiv = document.getElementById('patientMessages');
+            messagesDiv.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
+                messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+
+        // Doctor Chat Listener
+        const doctorChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'doctor', 'messages');
+        onSnapshot(doctorChatQuery, (snapshot) => {
+            const messagesDiv = document.getElementById('doctorMessages');
+            messagesDiv.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
+                messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+
+        // AI Chat Listener (Private chat)
+        const aiChatQuery = collection(db, 'artifacts', appId, 'ai_chat_sessions', userId, 'messages');
+        onSnapshot(aiChatQuery, (snapshot) => {
+            const messagesDiv = document.getElementById('aiMessages');
+            messagesDiv.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const messageClass = data.senderId === userId ? 'user-message' : 'ai-message';
+                messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+        
+        // Reminders Listener
+        const remindersQuery = collection(db, 'artifacts', appId, 'public_reminders');
+        onSnapshot(remindersQuery, (snapshot) => {
+            const remindersList = document.getElementById('reminderList');
+            remindersList.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const li = document.createElement('li');
+                li.textContent = `${data.text} - ${data.date}`;
+                remindersList.appendChild(li);
+            });
+        });
+    };
+
+    // Handles sending messages and saving to Firestore
+    window.sendMessage = async (type) => {
+        if (!isAuthReady) {
+            console.error("User not authenticated.");
+            return;
+        }
+
+        const input = document.getElementById(`${type}Input`);
+        const message = input.value.trim();
+        if (!message) return;
+
+        input.value = '';
+
+        let targetCollectionRef;
+        let senderName = 'Family';
+        const senderId = userId;
+
+        if (type === 'patient') {
+            targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'patient', 'messages');
+        } else if (type === 'doctor') {
+            targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'doctor', 'messages');
+        } else if (type === 'ai') {
+            targetCollectionRef = collection(db, 'artifacts', appId, 'ai_chat_sessions', userId, 'messages');
+            senderName = 'You';
+
+            document.getElementById('loading-indicator').style.display = 'block';
+            const aiResponse = await generateAIResponse(message);
+            document.getElementById('loading-indicator').style.display = 'none';
+            
+            await addDoc(targetCollectionRef, {
+                sender: 'AI Agent',
+                senderId: 'AI',
+                text: aiResponse,
+                timestamp: serverTimestamp()
+            });
+        }
+        
+        if (targetCollectionRef) {
+            await addDoc(targetCollectionRef, {
+                sender: senderName,
+                senderId: senderId,
+                text: message,
+                timestamp: serverTimestamp()
+            });
+        }
+    };
+
+    // Function to generate an AI response using the Gemini API
+    const generateAIResponse = async (prompt) => {
+        const chatHistory = [];
+        chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+        const payload = { contents: chatHistory };
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+            return text || "I'm sorry, I couldn't generate a response.";
+        } catch (error) {
+            console.error("Gemini API call failed:", error);
+            return "I'm sorry, I am unable to connect to the AI agent at this moment.";
+        }
+    };
+
     // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -94,33 +446,6 @@
             document.getElementById(btn.dataset.tab).classList.add('active');
         });
     });
-
-    // Send messages
-    function sendMessage(type) {
-        const input = document.getElementById(`${type}Input`);
-        const messagesDiv = document.getElementById(`${type}Messages`);
-        const message = input.value.trim();
-        if (message) {
-            messagesDiv.innerHTML += `<div><strong>You:</strong> ${message}</div>`;
-            input.value = '';
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-            if (type === 'ai') {
-                setTimeout(() => {
-                    messagesDiv.innerHTML += `<div><strong>AI:</strong> ${generateAIResponse(message)}</div>`;
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                }, 1000);
-            }
-        }
-    }
-
-    // Simple AI responses
-    function generateAIResponse(q) {
-        const lowerQ = q.toLowerCase();
-        if (lowerQ.includes('visit')) return "Remind the patient to carry all previous medical records.";
-        if (lowerQ.includes('bp') || lowerQ.includes('blood pressure')) return "Encourage them to rest and follow doctor's advice.";
-        return "Support them emotionally and remind them of their next appointment.";
-    }
 </script>
 </body>
 </html>

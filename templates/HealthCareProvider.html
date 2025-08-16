@@ -4,30 +4,245 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Healthcare Provider Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f9fafb; }
-    header { background: #2a6f97; color: white; padding: 1rem; text-align: center; }
-    .dashboard { display: flex; flex-wrap: wrap; padding: 1rem; gap: 1rem; }
-    .patients-section, .communication-section {
-        background: white; border-radius: 8px; padding: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    body { 
+        font-family: 'Inter', sans-serif; 
+        margin: 0; 
+        background: #f1f5f9; 
+        color: #1e293b;
     }
-    .patients-section { flex: 2; min-width: 350px; }
-    .communication-section { flex: 1; min-width: 300px; display: flex; flex-direction: column; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 0.5rem; border-bottom: 1px solid #ddd; }
-    th { background: #2a6f97; color: white; }
-    .chat-tabs { display: flex; margin-bottom: 0.5rem; }
-    .tab-btn { flex: 1; padding: 0.5rem; cursor: pointer; background: #ddd; border: none; }
-    .tab-btn.active { background: #2a6f97; color: white; }
-    .chat-window { display: none; flex-direction: column; flex: 1; }
-    .chat-window.active { display: flex; }
-    .chat-messages { flex: 1; background: #f1f1f1; margin-bottom: 0.5rem; padding: 0.5rem; overflow-y: auto; border-radius: 4px; }
-    .send-btn { background: #2a6f97; color: white; cursor: pointer; margin-top: 0.2rem; }
-    .alerts-section { margin-top: 1rem; background: #fff7f7; border-radius: 4px; padding: 0.5rem; }
-    .alerts-section h3 { margin-top: 0; }
-    .alerts-section ul { list-style: none; padding-left: 0; }
-    .alerts-section li { background: #ffe5e5; padding: 0.4rem; margin-bottom: 0.3rem; border-radius: 4px; }
+    header { 
+        background: #0f172a; 
+        color: white; 
+        padding: 1.5rem; 
+        text-align: center; 
+        font-size: 1.5rem;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+    .dashboard { 
+        display: flex; 
+        flex-wrap: wrap; 
+        padding: 2rem; 
+        gap: 2rem; 
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    .content-section, .communication-section, .patient-details-modal {
+        background: white; 
+        border-radius: 12px; 
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        min-width: 300px;
+    }
+    .content-section { flex: 2; }
+    .communication-section { 
+        flex: 1; 
+        display: flex; 
+        flex-direction: column; 
+    }
+    
+    h2, h3, h4 {
+        font-weight: bold;
+        color: #1e40af;
+        margin-bottom: 1rem;
+    }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
+    h4 { font-size: 1rem; }
+
+    /* Tabs for Patient List */
+    .patient-tabs { 
+        display: flex; 
+        justify-content: flex-start;
+        margin-bottom: 1rem; 
+        gap: 0.5rem;
+    }
+    .patient-tab-btn { 
+        padding: 0.75rem 1.5rem; 
+        cursor: pointer; 
+        background: #e2e8f0; 
+        border: none; 
+        border-radius: 8px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    .patient-tab-btn.active { 
+        background: #3b82f6; 
+        color: white; 
+    }
+
+    /* Table styling */
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        text-align: left;
+    }
+    th, td { 
+        padding: 1rem; 
+        border-bottom: 1px solid #e2e8f0; 
+    }
+    th { 
+        background: #f8fafc; 
+        color: #64748b; 
+        font-weight: 600; 
+    }
+    tbody tr:hover { 
+        background-color: #f0f4f8; 
+    }
+    
+    /* Communication Section */
+    .chat-tabs { 
+        display: flex; 
+        flex-wrap: nowrap;
+        justify-content: space-around;
+        margin-bottom: 1rem; 
+    }
+    .tab-btn { 
+        flex: 1; 
+        padding: 0.75rem 0.5rem;
+        cursor: pointer; 
+        background: #e2e8f0; 
+        border: none; 
+        border-radius: 8px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+        text-align: center;
+    }
+    .tab-btn.active { 
+        background: #3b82f6; 
+        color: white; 
+    }
+    .chat-window { 
+        display: none; 
+        flex-direction: column; 
+        flex: 1; 
+        border: 1px solid #e2e8f0; 
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .chat-window.active { 
+        display: flex; 
+        flex: 1;
+    }
+    .chat-messages { 
+        flex-grow: 1; 
+        background: #f8fafc; 
+        padding: 0.5rem; 
+        overflow-y: auto; 
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        max-height: 400px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .chat-messages .user-message {
+        background-color: #e2f2ff;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-end;
+        max-width: 80%;
+    }
+    .chat-messages .other-message {
+        background-color: #f0f4f8;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-start;
+        max-width: 80%;
+    }
+    .chat-messages .ai-message {
+        background-color: #f0f4f8;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-start;
+        max-width: 80%;
+    }
+    .chat-input-container {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .chat-input-container input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+    .send-btn { 
+        background: #22c55e; 
+        color: white; 
+        cursor: pointer; 
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    .send-btn:hover { background: #15803d; }
+
+    /* Alerts and Reminders */
+    .alerts-section { 
+        margin-top: 2rem; 
+        background: #fff7f7; 
+        border-radius: 8px; 
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .alerts-section h3 {
+        color: #ef4444;
+        margin-bottom: 0.5rem;
+    }
+    .alerts-section ul { 
+        list-style: none; 
+        padding-left: 0; 
+    }
+    .alerts-section li { 
+        background: #fecaca; 
+        color: #991b1b;
+        padding: 0.75rem; 
+        margin-bottom: 0.5rem; 
+        border-radius: 8px;
+    }
+
+    /* Modal Styling */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        max-width: 900px;
+        width: 90%;
+        position: relative;
+    }
+    .close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 2rem;
+        cursor: pointer;
+        color: #6b7280;
+    }
+    .modal-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
 </style>
 </head>
 <body>
@@ -37,32 +252,34 @@
 
 <main class="dashboard">
     <!-- Left: Patient Management -->
-    <section class="patients-section">
-        <h2>My Patients</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Patient Name</th>
-                    <th>Condition</th>
-                    <th>Next Visit</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="patientList">
-                <tr>
-                    <td>Mary Wanjiku</td>
-                    <td>Normal Pregnancy</td>
-                    <td>2025-08-15</td>
-                    <td><button onclick="viewPatient('Mary Wanjiku')">View</button></td>
-                </tr>
-                <tr>
-                    <td>Jane Doe</td>
-                    <td>High Blood Pressure</td>
-                    <td>2025-08-13</td>
-                    <td><button onclick="viewPatient('Jane Doe')">View</button></td>
-                </tr>
-            </tbody>
-        </table>
+    <section class="content-section">
+        <div class="flex justify-between items-center mb-4">
+            <h2>My Patients</h2>
+            <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onclick="showModal('newPatientModal')">Add New Patient</button>
+        </div>
+        
+        <div class="patient-tabs">
+            <button class="patient-tab-btn active" data-patient-tab="all">All Patients</button>
+            <button class="patient-tab-btn" data-patient-tab="high-risk">High-Risk</button>
+            <button class="patient-tab-btn" data-patient-tab="follow-up">Needs Follow-up</button>
+        </div>
+        
+        <div id="patient-list-container">
+            <table id="patientTable">
+                <thead>
+                    <tr>
+                        <th>Patient ID</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Last Check-in</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="patientList">
+                    <!-- Patient data will be dynamically populated here from Firestore -->
+                </tbody>
+            </table>
+        </div>
     </section>
 
     <!-- Right: Communication & Alerts -->
@@ -76,39 +293,301 @@
         <!-- Chat Windows -->
         <div class="chat-window active" id="patientChat">
             <div class="chat-messages" id="patientMessages"></div>
-            <input type="text" id="patientInput" placeholder="Type message to patient...">
-            <button class="send-btn" onclick="sendMessage('patient')">Send</button>
+            <div class="chat-input-container">
+                <input type="text" id="patientInput" placeholder="Type message to patient...">
+                <button class="send-btn" onclick="sendMessage('patient')">Send</button>
+            </div>
         </div>
 
         <div class="chat-window" id="providerChat">
             <div class="chat-messages" id="providerMessages"></div>
-            <input type="text" id="providerInput" placeholder="Type message to other providers...">
-            <button class="send-btn" onclick="sendMessage('provider')">Send</button>
+            <div class="chat-input-container">
+                <input type="text" id="providerInput" placeholder="Type message to other providers...">
+                <button class="send-btn" onclick="sendMessage('provider')">Send</button>
+            </div>
         </div>
 
         <div class="chat-window" id="aiChat">
             <div class="chat-messages" id="aiMessages"></div>
-            <input type="text" id="aiInput" placeholder="Ask AI Assistant...">
-            <button class="send-btn" onclick="sendMessage('ai')">Send</button>
+            <div class="chat-input-container">
+                <input type="text" id="aiInput" placeholder="Ask AI Assistant...">
+                <button class="send-btn" onclick="sendMessage('ai')">Send</button>
+            </div>
         </div>
 
-        <!-- Alerts -->
+        <!-- Alerts & Reminders -->
         <div class="alerts-section">
-            <h3>Critical Alerts</h3>
+            <h3 class="text-red-600">Critical Alerts</h3>
             <ul id="alertList">
-                <li>Jane Doe - High BP detected (Possible preeclampsia)</li>
+                <!-- Alerts will be dynamically added here -->
             </ul>
-            <h3>Reminders</h3>
+            <h3 class="text-blue-600">Reminders</h3>
             <ul id="reminderList">
-                <li>Follow up with Mary Wanjiku - 15 Aug 2025</li>
-                <li>Check lab results for Jane Doe</li>
+                <!-- Reminders will be dynamically added here -->
             </ul>
         </div>
     </section>
 </main>
 
-<script>
-    // Tab switching
+<!-- Patient Details Modal -->
+<div id="patientDetailsModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="hideModal('patientDetailsModal')">&times;</span>
+        <h2 id="patientNameHeader">Patient Name</h2>
+        <p id="patientIdHeader" class="text-sm text-gray-500 mb-4">Patient ID: N/A</p>
+
+        <div class="modal-grid">
+            <!-- Vitals Section -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <h4 class="text-gray-700">Recent Vitals</h4>
+                <ul id="vitalsList">
+                    <li>Blood Pressure: <span id="bpValue"></span></li>
+                    <li>Heart Rate: <span id="hrValue"></span></li>
+                    <li>Weight: <span id="weightValue"></span></li>
+                </ul>
+            </div>
+            
+            <!-- Records Section -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <h4 class="text-gray-700">Health Records</h4>
+                <p>View patient's full medical history and lab results.</p>
+                <button class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg">View Records</button>
+            </div>
+
+            <!-- Appointments Section -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <h4 class="text-gray-700">Appointments</h4>
+                <p id="nextAppointment">Next: N/A</p>
+                <button class="mt-2 bg-green-500 text-white px-4 py-2 rounded-lg">Schedule/View All</button>
+            </div>
+
+            <!-- Prescriptions Section -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <h4 class="text-gray-700">Prescriptions</h4>
+                <p>Manage and issue prescriptions digitally.</p>
+                <button class="mt-2 bg-purple-500 text-white px-4 py-2 rounded-lg">Manage Prescriptions</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, collection, onSnapshot, serverTimestamp, addDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Global variables provided by the environment
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    let db, auth, userId;
+    let isAuthReady = false;
+
+    // --- Firebase Initialization and Authentication ---
+    const initFirebase = async () => {
+        try {
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.error("Firebase config is missing.");
+                return;
+            }
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            // Listen for auth state changes and set up listeners once ready
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    isAuthReady = true;
+                    console.log("Healthcare provider authenticated:", userId);
+                    setupRealtimeListeners();
+                } else {
+                    console.log("No user authenticated. Signing in...");
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Authentication failed:", error);
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+        }
+    };
+
+    initFirebase();
+
+    // --- Real-time Data Listeners (Firestore) ---
+    const setupRealtimeListeners = () => {
+        if (!isAuthReady) return;
+
+        // Listen to patient data
+        const patientsQuery = collection(db, 'artifacts', appId, 'patients');
+        onSnapshot(patientsQuery, (snapshot) => {
+            const patientList = document.getElementById('patientList');
+            patientList.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${data.patientId}</td>
+                    <td>${data.name}</td>
+                    <td><span class="px-2 py-1 text-sm font-semibold rounded-full ${getStatusClass(data.status)}">${data.status}</span></td>
+                    <td>${data.lastCheckin}</td>
+                    <td><button class="bg-indigo-500 text-white px-3 py-1 rounded-lg hover:bg-indigo-600 transition" onclick="viewPatient('${data.patientId}')">View Details</button></td>
+                `;
+                patientList.appendChild(tr);
+            });
+        });
+
+        // Listen to provider-to-patient chat
+        const patientChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'patient', 'messages');
+        onSnapshot(patientChatQuery, (snapshot) => {
+            const messagesDiv = document.getElementById('patientMessages');
+            messagesDiv.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
+                messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+
+        // Listen to provider-to-provider chat
+        const providerChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'provider', 'messages');
+        onSnapshot(providerChatQuery, (snapshot) => {
+            const messagesDiv = document.getElementById('providerMessages');
+            messagesDiv.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
+                messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+
+        // Listen to provider's AI chat
+        const aiChatQuery = collection(db, 'artifacts', appId, 'ai_chat_sessions', userId, 'messages');
+        onSnapshot(aiChatQuery, (snapshot) => {
+            const messagesDiv = document.getElementById('aiMessages');
+            messagesDiv.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const messageClass = data.senderId === userId ? 'user-message' : 'ai-message';
+                messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+        
+        // Listen to alerts and reminders
+        const alertsQuery = collection(db, 'artifacts', appId, 'public_alerts');
+        onSnapshot(alertsQuery, (snapshot) => {
+            const alertList = document.getElementById('alertList');
+            alertList.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const li = document.createElement('li');
+                li.textContent = `${data.text} - ${data.date}`;
+                alertList.appendChild(li);
+            });
+        });
+
+        const remindersQuery = collection(db, 'artifacts', appId, 'public_reminders');
+        onSnapshot(remindersQuery, (snapshot) => {
+            const reminderList = document.getElementById('reminderList');
+            reminderList.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const li = document.createElement('li');
+                li.textContent = `${data.text} - ${data.date}`;
+                reminderList.appendChild(li);
+            });
+        });
+    };
+
+    // --- User Interaction Functions ---
+    // Handle sending messages to different chat channels
+    window.sendMessage = async (type) => {
+        if (!isAuthReady) {
+            console.error("User not authenticated.");
+            return;
+        }
+
+        const input = document.getElementById(`${type}Input`);
+        const message = input.value.trim();
+        if (!message) return;
+
+        input.value = '';
+
+        let targetCollectionRef;
+        let senderName = 'Provider';
+        const senderId = userId;
+
+        if (type === 'patient') {
+            targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'patient', 'messages');
+        } else if (type === 'provider') {
+            targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'provider', 'messages');
+        } else if (type === 'ai') {
+            targetCollectionRef = collection(db, 'artifacts', appId, 'ai_chat_sessions', userId, 'messages');
+            senderName = 'You';
+
+            // Send user message to Firestore
+            await addDoc(targetCollectionRef, {
+                sender: senderName,
+                senderId: senderId,
+                text: message,
+                timestamp: serverTimestamp()
+            });
+
+            const aiResponse = await generateAIResponse(message);
+            
+            // Send AI response back to Firestore
+            await addDoc(targetCollectionRef, {
+                sender: 'AI Assistant',
+                senderId: 'AI',
+                text: aiResponse,
+                timestamp: serverTimestamp()
+            });
+            return;
+        }
+        
+        await addDoc(targetCollectionRef, {
+            sender: senderName,
+            senderId: senderId,
+            text: message,
+            timestamp: serverTimestamp()
+        });
+    };
+
+    // Function to generate an AI response using the Gemini API
+    const generateAIResponse = async (prompt) => {
+        const chatHistory = [];
+        chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+        const payload = { contents: chatHistory };
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+            return text || "I'm sorry, I couldn't generate a response.";
+        } catch (error) {
+            console.error("Gemini API call failed:", error);
+            return "I'm sorry, I am unable to connect to the AI agent at this moment.";
+        }
+    };
+
+    // Tab switching for both patient list and chat
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -118,38 +597,69 @@
         });
     });
 
-    // Send message simulation
-    function sendMessage(type) {
-        const input = document.getElementById(`${type}Input`);
-        const messagesDiv = document.getElementById(`${type}Messages`);
-        const message = input.value.trim();
-        if (message) {
-            messagesDiv.innerHTML += `<div><strong>You:</strong> ${message}</div>`;
-            input.value = '';
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    document.querySelectorAll('.patient-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.patient-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterPatients(btn.dataset.patientTab);
+        });
+    });
 
-            if (type === 'ai') {
-                setTimeout(() => {
-                    messagesDiv.innerHTML += `<div><strong>AI:</strong> ${generateAIResponse(message)}</div>`;
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                }, 1000);
+    // Filtering patients (dummy function for now, will be data-driven with Firestore)
+    function filterPatients(filterType) {
+        // This will be replaced with Firestore queries (e.g., query(patientsCollection, where('status', '==', 'High-Risk')))
+        console.log(`Filtering patients by: ${filterType}`);
+    }
+
+    // Function to handle the patient details modal
+    window.viewPatient = async (patientId) => {
+        const patientDetailsModal = document.getElementById('patientDetailsModal');
+        const patientNameHeader = document.getElementById('patientNameHeader');
+        const patientIdHeader = document.getElementById('patientIdHeader');
+        const bpValue = document.getElementById('bpValue');
+        const hrValue = document.getElementById('hrValue');
+        const weightValue = document.getElementById('weightValue');
+        const nextAppointment = document.getElementById('nextAppointment');
+
+        // Fetch patient data from Firestore
+        const patientRef = doc(db, 'artifacts', appId, 'patients', patientId);
+        try {
+            const docSnap = await getDoc(patientRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                patientNameHeader.textContent = data.name;
+                patientIdHeader.textContent = `Patient ID: ${data.patientId}`;
+                bpValue.textContent = data.vitals?.bloodPressure || 'N/A';
+                hrValue.textContent = data.vitals?.heartRate || 'N/A';
+                weightValue.textContent = data.vitals?.weight || 'N/A';
+                nextAppointment.textContent = `Next: ${data.nextVisit || 'N/A'}`;
+                showModal('patientDetailsModal');
+            } else {
+                console.log("No such patient record found!");
             }
+        } catch (error) {
+            console.error("Error fetching patient details:", error);
         }
+    };
+
+    function showModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
     }
 
-    // AI assistant responses
-    function generateAIResponse(q) {
-        const lowerQ = q.toLowerCase();
-        if (lowerQ.includes('bp') || lowerQ.includes('blood pressure')) 
-            return "Monitor closely and consider antihypertensive management. Schedule immediate review.";
-        if (lowerQ.includes('bleeding')) 
-            return "Advise urgent referral for possible obstetric emergency.";
-        return "I recommend reviewing the latest maternal care guidelines.";
-    }
+    window.hideModal = (modalId) => {
+        document.getElementById(modalId).style.display = 'none';
+    };
 
-    // View patient record
-    function viewPatient(name) {
-        alert("Opening record for: " + name);
+    function getStatusClass(status) {
+        switch (status) {
+            case 'High-Risk':
+                return 'bg-red-200 text-red-800';
+            case 'Needs Follow-up':
+                return 'bg-yellow-200 text-yellow-800';
+            case 'Normal Pregnancy':
+            default:
+                return 'bg-green-200 text-green-800';
+        }
     }
 </script>
 </body>

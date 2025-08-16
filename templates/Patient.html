@@ -3,125 +3,524 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maternal Care Patient Dashboard</title>
+    <title>Maternal Care System - Patient Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
             margin: 0;
-            background: #f9fafb;
+            padding: 0;
         }
+
         header {
-            background: #2a6f97;
+            background-color: #3b82f6;
             color: white;
             padding: 1rem;
             text-align: center;
+            font-size: 1.5rem;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
         }
+
         .dashboard {
             display: flex;
-            flex-wrap: wrap;
-            padding: 1rem;
-            gap: 1rem;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        .form-section, .communication-section {
-            background: white;
+
+        @media (min-width: 1024px) {
+            .dashboard {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+        }
+
+        .content-section, .form-section, .communication-section {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section, .communication-section, .info-section {
+            flex: 1;
+        }
+
+        .form-section h2, .communication-section h2, .info-section h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #1e40af;
+        }
+
+        form fieldset {
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
-            padding: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
-        .form-section {
-            flex: 2;
-            min-width: 350px;
+
+        form legend {
+            font-weight: bold;
+            color: #475569;
+            padding: 0 0.5rem;
         }
+
+        form label {
+            display: block;
+            margin-top: 1rem;
+            font-weight: 500;
+        }
+
+        form input, form select, form textarea {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        form textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background-color: #2563eb;
+            color: white;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            background-color: #1d4ed8;
+        }
+
         .communication-section {
             flex: 1;
-            min-width: 300px;
             display: flex;
             flex-direction: column;
         }
-        fieldset {
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            padding: 0.8rem;
-        }
-        legend {
-            font-weight: bold;
-            color: #2a6f97;
-        }
-        label {
-            display: block;
-            margin-top: 0.5rem;
-        }
-        input, textarea, select, button {
-            width: 100%;
-            padding: 0.5rem;
-            margin-top: 0.2rem;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-        .submit-btn {
-            background: #2a6f97;
-            color: white;
-            margin-top: 0.5rem;
-            cursor: pointer;
-        }
+
         .chat-tabs {
             display: flex;
-            margin-bottom: 0.5rem;
+            justify-content: space-around;
+            margin-bottom: 1rem;
         }
+
         .tab-btn {
-            flex: 1;
-            padding: 0.5rem;
-            cursor: pointer;
-            background: #ddd;
+            padding: 0.75rem 1.5rem;
+            background-color: #e2e8f0;
             border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
         }
+
         .tab-btn.active {
-            background: #2a6f97;
+            background-color: #3b82f6;
             color: white;
         }
+
         .chat-window {
             display: none;
             flex-direction: column;
             flex: 1;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
         }
+
         .chat-window.active {
             display: flex;
         }
+
         .chat-messages {
-            flex: 1;
-            background: #f1f1f1;
-            margin-bottom: 0.5rem;
+            flex-grow: 1;
             padding: 0.5rem;
             overflow-y: auto;
-            border-radius: 4px;
+            max-height: 400px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
-        .send-btn {
-            background: #2a6f97;
-            color: white;
-            cursor: pointer;
-            margin-top: 0.2rem;
-        }
-        .alerts-section {
-            margin-top: 1rem;
-            background: #fff7f7;
-            border-radius: 4px;
+        
+        .chat-messages .user-message {
+            background-color: #e2f2ff;
             padding: 0.5rem;
+            border-radius: 8px;
+            align-self: flex-end;
+            max-width: 80%;
         }
+        .chat-messages .other-message {
+            background-color: #f0f4f8;
+            padding: 0.5rem;
+            border-radius: 8px;
+            align-self: flex-start;
+            max-width: 80%;
+        }
+        
+        .chat-messages .ai-message {
+             background-color: #e2f2ff;
+            padding: 0.5rem;
+            border-radius: 8px;
+            align-self: flex-start;
+            max-width: 80%;
+        }
+
+        .chat-window input {
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-right: 0.5rem;
+            flex: 1;
+        }
+
+        .send-btn {
+            background-color: #22c55e;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .send-btn:hover {
+            background-color: #15803d;
+        }
+
+        .alerts-section {
+            margin-top: 2rem;
+        }
+
         .alerts-section h3 {
-            margin-top: 0;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #ef4444;
+            margin-bottom: 0.5rem;
         }
+
         .alerts-section ul {
             list-style: none;
-            padding-left: 0;
+            padding: 0;
         }
+
         .alerts-section li {
-            background: #ffe5e5;
-            padding: 0.4rem;
-            margin-bottom: 0.3rem;
-            border-radius: 4px;
+            background-color: #fecaca;
+            color: #991b1b;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        
+        #loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+            color: #475569;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        
+        .info-section h3 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #1e40af;
+        }
+        
+        .info-section ul {
+            list-style-type: disc;
+            padding-left: 20px;
         }
     </style>
+
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth, userId;
+        let isAuthReady = false;
+
+        // Initialize Firebase and handle authentication
+        const initFirebase = async () => {
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.error("Firebase config is missing.");
+                return;
+            }
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            // Listen for auth state changes
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    isAuthReady = true;
+                    console.log("User authenticated:", userId);
+                    document.getElementById('userIdDisplay').textContent = `Your User ID: ${userId}`;
+                    // Start listening for data once authenticated
+                    setupRealtimeListeners();
+                } else {
+                    console.log("No user authenticated. Signing in...");
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Authentication failed:", error);
+                    }
+                }
+            });
+        };
+
+        initFirebase();
+
+        // Sets up real-time listeners for all chat windows
+        const setupRealtimeListeners = () => {
+            if (!isAuthReady) return;
+
+            // Doctor Chat Listener (Public chat)
+            // Path: artifacts/{appId}/public_chats/doctor/messages
+            const doctorChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'doctor', 'messages');
+            onSnapshot(doctorChatQuery, (snapshot) => {
+                const messagesDiv = document.getElementById('doctorMessages');
+                messagesDiv.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
+                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+                });
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            });
+
+            // Mothers Group Chat Listener (Public chat)
+            // Path: artifacts/{appId}/public_chats/mothers_group/messages
+            const mothersChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'mothers_group', 'messages');
+            onSnapshot(mothersChatQuery, (snapshot) => {
+                const messagesDiv = document.getElementById('mothersMessages');
+                messagesDiv.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
+                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+                });
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            });
+
+            // AI Chat Listener (Private chat)
+            // Path: artifacts/{appId}/ai_chat_sessions/{userId}/messages
+            const aiChatQuery = collection(db, 'artifacts', appId, 'ai_chat_sessions', userId, 'messages');
+            onSnapshot(aiChatQuery, (snapshot) => {
+                const messagesDiv = document.getElementById('aiMessages');
+                messagesDiv.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const messageClass = data.senderId === userId ? 'user-message' : 'ai-message';
+                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+                });
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            });
+        };
+
+        // Handles sending messages and saving to Firestore
+        window.sendMessage = async (type) => {
+            if (!isAuthReady) {
+                console.error("User not authenticated.");
+                return;
+            }
+
+            const input = document.getElementById(`${type}Input`);
+            const message = input.value.trim();
+            if (!message) return;
+
+            input.value = '';
+
+            let targetCollectionRef;
+            let senderName = 'Patient';
+            const senderId = userId;
+
+            if (type === 'doctor') {
+                targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'doctor', 'messages');
+            } else if (type === 'mothers') {
+                targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'mothers_group', 'messages');
+            } else if (type === 'ai') {
+                // Use the new, more robust path for private AI chats
+                targetCollectionRef = collection(db, 'artifacts', appId, 'ai_chat_sessions', userId, 'messages');
+                senderName = 'You';
+                
+                // Handle AI response generation
+                document.getElementById('loading-indicator').style.display = 'block';
+                const aiResponse = await generateAIResponse(message);
+                document.getElementById('loading-indicator').style.display = 'none';
+                
+                // Save AI response to database
+                await addDoc(targetCollectionRef, {
+                    sender: 'AI Agent',
+                    senderId: 'AI',
+                    text: aiResponse,
+                    timestamp: serverTimestamp()
+                });
+            }
+
+            // Save user message to database
+            if (targetCollectionRef) {
+                await addDoc(targetCollectionRef, {
+                    sender: senderName,
+                    senderId: senderId,
+                    text: message,
+                    timestamp: serverTimestamp()
+                });
+            }
+        };
+
+        // Function to generate an AI response using the Gemini API
+        const generateAIResponse = async (prompt) => {
+            const chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                return text || "I'm sorry, I couldn't generate a response.";
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                return "I'm sorry, I am unable to connect to the AI agent at this moment.";
+            }
+        };
+
+        // Handles saving medical history form data to Firestore
+        document.getElementById('medicalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!isAuthReady) {
+                console.error("User not authenticated. Cannot save form data.");
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'medical_history', 'patient_details');
+                await setDoc(docRef, data);
+                // Replace alert with custom modal for better UX
+                const customAlert = document.createElement('div');
+                customAlert.textContent = "Medical details saved successfully!";
+                customAlert.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background-color: #22c55e;
+                    color: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    z-index: 1000;
+                `;
+                document.body.appendChild(customAlert);
+                setTimeout(() => {
+                    document.body.removeChild(customAlert);
+                }, 3000);
+            } catch (error) {
+                console.error("Error saving medical details:", error);
+                const customAlert = document.createElement('div');
+                customAlert.textContent = "Failed to save medical details. Please try again.";
+                customAlert.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background-color: #ef4444;
+                    color: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    z-index: 1000;
+                `;
+                document.body.appendChild(customAlert);
+                setTimeout(() => {
+                    document.body.removeChild(customAlert);
+                }, 3000);
+            }
+        });
+
+        // Tab switching logic
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.chat-window').forEach(w => w.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Symptom alert system logic
+        document.getElementById('currentSymptoms').addEventListener('input', function () {
+            const symptoms = this.value.toLowerCase();
+            const alertList = document.getElementById('alertList');
+            alertList.innerHTML = '';
+
+            const dangerSigns = [
+                { keyword: 'bleeding', message: 'Possible severe bleeding (postpartum hemorrhage) — seek urgent care.' },
+                { keyword: 'severe headache', message: 'Could indicate preeclampsia — consult your doctor immediately.' },
+                { keyword: 'swelling', message: 'Swelling in face/hands may be a sign of high blood pressure.' },
+                { keyword: 'fever', message: 'Fever could be a sign of infection (puerperal sepsis) — seek urgent care.' },
+                { keyword: 'difficulty breathing', message: 'Difficulty breathing or chest pain can be a sign of a serious complication like pulmonary embolism. Go to the hospital immediately.' },
+                { keyword: 'blurred vision', message: 'Sudden blurred vision can be a symptom of preeclampsia. Contact your doctor immediately.' },
+                { keyword: 'abdominal pain', message: 'Severe abdominal pain could be a sign of a number of issues including a placental abruption or an ectopic pregnancy. Contact your doctor or emergency services.' },
+                { keyword: 'unusual vaginal discharge', message: 'Unusual or foul-smelling discharge could be a sign of infection. Consult your doctor.' }
+            ];
+
+            dangerSigns.forEach(sign => {
+                if (symptoms.includes(sign.keyword)) {
+                    const li = document.createElement('li');
+                    li.textContent = sign.message;
+                    alertList.appendChild(li);
+                }
+            });
+        });
+    </script>
 </head>
 <body>
     <header>
@@ -129,7 +528,7 @@
     </header>
 
     <main class="dashboard">
-        <!-- Left Side: Medical History Form -->
+        <!-- Left Side: Medical History Form and Information -->
         <section class="form-section">
             <h2>Medical History & Current Pregnancy</h2>
             <form id="medicalForm">
@@ -157,8 +556,6 @@
                     <textarea name="allergies"></textarea>
                     <label>Pre-existing Conditions:</label>
                     <textarea name="conditions"></textarea>
-                    <label>Previous Complications:</label>
-                    <textarea name="previousComplications"></textarea>
                 </fieldset>
 
                 <fieldset>
@@ -175,31 +572,87 @@
             </form>
         </section>
 
-        <!-- Right Side: Chat + Alerts -->
+        <!-- Right Side: Chat, Alerts, and Information -->
         <section class="communication-section">
             <div class="chat-tabs">
                 <button class="tab-btn active" data-tab="doctorChat">Doctor</button>
                 <button class="tab-btn" data-tab="mothersChat">Mothers Group</button>
                 <button class="tab-btn" data-tab="aiChat">AI Agent</button>
+                <button class="tab-btn" data-tab="infoSection">Awareness</button>
             </div>
 
             <!-- Chat Windows -->
             <div class="chat-window active" id="doctorChat">
                 <div class="chat-messages" id="doctorMessages"></div>
-                <input type="text" id="doctorInput" placeholder="Type message to Doctor...">
-                <button class="send-btn" onclick="sendMessage('doctor')">Send</button>
+                <div class="flex">
+                    <input type="text" id="doctorInput" placeholder="Type message to Doctor...">
+                    <button class="send-btn" onclick="sendMessage('doctor')">Send</button>
+                </div>
             </div>
 
             <div class="chat-window" id="mothersChat">
                 <div class="chat-messages" id="mothersMessages"></div>
-                <input type="text" id="mothersInput" placeholder="Type message to Mothers Group...">
-                <button class="send-btn" onclick="sendMessage('mothers')">Send</button>
+                <div class="flex">
+                    <input type="text" id="mothersInput" placeholder="Type message to Mothers Group...">
+                    <button class="send-btn" onclick="sendMessage('mothers')">Send</button>
+                </div>
             </div>
 
             <div class="chat-window" id="aiChat">
                 <div class="chat-messages" id="aiMessages"></div>
-                <input type="text" id="aiInput" placeholder="Ask AI Agent about your pregnancy...">
-                <button class="send-btn" onclick="sendMessage('ai')">Send</button>
+                <div id="loading-indicator">AI Agent is typing...</div>
+                <div class="flex">
+                    <input type="text" id="aiInput" placeholder="Ask AI Agent about your pregnancy...">
+                    <button class="send-btn" onclick="sendMessage('ai')">Send</button>
+                </div>
+            </div>
+            
+            <!-- Information Section -->
+            <div class="content-section chat-window" id="infoSection">
+                <h2>Maternal Mortality: Causes & Prevention</h2>
+                <div class="info-content">
+                    <p>Understanding the risks is key to a healthy pregnancy. Here's a summary of the major causes of maternal mortality and what you can do to stay safe, based on the research project.</p>
+                    
+                    <h3>Major Causes of Maternal Mortality</h3>
+                    <p>The document highlights several key factors, often a mix of patient-related and healthcare-system issues:</p>
+                    <ul class="list-disc pl-5 mb-4">
+                        <li><strong>Severe Bleeding (Haemorrhage):</strong> This is the leading cause globally and in Kenya. It often occurs after childbirth (postpartum haemorrhage).</li>
+                        <li><strong>Hypertensive Disorders:</strong> Conditions like <strong>preeclampsia</strong> and <strong>eclampsia</strong>, characterized by high blood pressure, are major contributors. Eclampsia can lead to seizures.</li>
+                        <li><strong>Infections:</strong> Infections, such as <strong>puerperal sepsis</strong>, can occur after delivery and are a significant risk.</li>
+                        <li><strong>Unsafe Abortions:</strong> These are a major cause of death, particularly in regions where they are not medically supervised.</li>
+                        <li><strong>Lack of Awareness:</strong> Not knowing the danger signs of complications, leading to delays in seeking care.</li>
+                        <li><strong>Healthcare System Failures:</strong> These include shortages of skilled staff, lack of access to emergency care, and delays in treatment.</li>
+                    </ul>
+                    
+                    <h3>How to Know If You're Experiencing a Complication</h3>
+                    <p>Early detection is vital. Be aware of these critical signs:</p>
+                    <ul class="list-disc pl-5 mb-4">
+                        <li><strong>Heavy Bleeding:</strong> Any bleeding, especially heavy bleeding, during or after pregnancy.</li>
+                        <li><strong>Severe Headache:</strong> A persistent or severe headache, particularly with blurred vision, can be a sign of preeclampsia.</li>
+                        <li><strong>High Fever:</strong> A high temperature can indicate a serious infection.</li>
+                        <li><strong>Swelling:</strong> Sudden or excessive swelling in your face or hands.</li>
+                        <li><strong>Severe Abdominal Pain:</strong> This can be a sign of a serious issue like placental abruption.</li>
+                        <li><strong>Seizures or Coma:</strong> An emergency sign of eclampsia.</li>
+                    </ul>
+                    
+                    <h3>What You Should Do (Immediate Measures)</h3>
+                    <p>If you experience any of the above symptoms, do not wait. Take these steps immediately:</p>
+                    <ol class="list-decimal pl-5 mb-4">
+                        <li><strong>Contact a Doctor or Hospital:</strong> Use this app's chat feature to alert your doctor or call emergency services right away.</li>
+                        <li><strong>Go to the Hospital:</strong> The fastest way to get help is to get to a medical facility. Do not delay.</li>
+                        <li><strong>Communicate Clearly:</strong> Explain your symptoms to the healthcare provider as precisely as possible.</li>
+                    </ol>
+                    
+                    <h3>Prevention is Key</h3>
+                    <p>The best way to avoid complications is to stay proactive throughout your pregnancy:</p>
+                    <ul class="list-disc pl-5 mb-4">
+                        <li><strong>Attend all Antenatal Care (ANC) Appointments:</strong> Regular check-ups are essential for monitoring your health and the baby's.</li>
+                        <li><strong>Educate Yourself:</strong> Learn about the stages of pregnancy and potential risks. Use this app's AI chat to ask questions.</li>
+                        <li><strong>Maintain a Healthy Lifestyle:</strong> Eat a balanced diet, exercise regularly (as advised by your doctor), and avoid smoking and alcohol.</li>
+                        <li><strong>Communicate:</strong> Talk to your doctor about any concerns you have, no matter how small they seem.</li>
+                        <li><strong>Use the System:</strong> Update your symptoms and medical history in this dashboard so your healthcare provider has the most current information.</li>
+                    </ul>
+                </div>
             </div>
 
             <!-- Alerts & Reminders -->
@@ -215,64 +668,8 @@
         </section>
     </main>
 
-    <script>
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.chat-window').forEach(w => w.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById(btn.dataset.tab).classList.add('active');
-            });
-        });
-
-        // Send messages
-        function sendMessage(type) {
-            const input = document.getElementById(`${type}Input`);
-            const messagesDiv = document.getElementById(`${type}Messages`);
-            const message = input.value.trim();
-            if (message) {
-                messagesDiv.innerHTML += `<div><strong>You:</strong> ${message}</div>`;
-                input.value = '';
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-                if (type === 'ai') {
-                    setTimeout(() => {
-                        messagesDiv.innerHTML += `<div><strong>AI:</strong> ${generateAIResponse(message)}</div>`;
-                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    }, 1000);
-                }
-            }
-        }
-
-        // Simulated AI agent responses
-        function generateAIResponse(question) {
-            const lowerQ = question.toLowerCase();
-            if (lowerQ.includes('headache')) return "Headaches can be common, but if severe, consult your doctor immediately.";
-            if (lowerQ.includes('bleeding')) return "Bleeding during pregnancy requires urgent medical attention. Visit your hospital immediately.";
-            return "I understand your concern. Please consult your healthcare provider for personalized advice.";
-        }
-
-        // Symptom alert system
-        document.getElementById('currentSymptoms').addEventListener('input', function () {
-            const symptoms = this.value.toLowerCase();
-            const alertList = document.getElementById('alertList');
-            alertList.innerHTML = '';
-
-            const dangerSigns = [
-                { keyword: 'bleeding', message: 'Possible miscarriage or placenta issues — seek urgent care.' },
-                { keyword: 'severe headache', message: 'Could indicate preeclampsia — consult your doctor immediately.' },
-                { keyword: 'swelling', message: 'Swelling in face/hands may be a sign of high blood pressure.' }
-            ];
-
-            dangerSigns.forEach(sign => {
-                if (symptoms.includes(sign.keyword)) {
-                    const li = document.createElement('li');
-                    li.textContent = sign.message;
-                    alertList.appendChild(li);
-                }
-            });
-        });
-    </script>
+    <div class="footer">
+        <p id="userIdDisplay">User ID: N/A</p>
+    </div>
 </body>
 </html>
