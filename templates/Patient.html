@@ -260,267 +260,6 @@
         }
     </style>
 
-    <!-- Firebase SDK Scripts -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, onSnapshot, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global variables provided by the environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let db, auth, userId;
-        let isAuthReady = false;
-
-        // Initialize Firebase and handle authentication
-        const initFirebase = async () => {
-            if (Object.keys(firebaseConfig).length === 0) {
-                console.error("Firebase config is missing.");
-                return;
-            }
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            
-            // Listen for auth state changes
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    isAuthReady = true;
-                    console.log("User authenticated:", userId);
-                    document.getElementById('userIdDisplay').textContent = `Your User ID: ${userId}`;
-                    // Start listening for data once authenticated
-                    setupRealtimeListeners();
-                } else {
-                    console.log("No user authenticated. Signing in...");
-                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Authentication failed:", error);
-                    }
-                }
-            });
-        };
-
-        initFirebase();
-
-        // Sets up real-time listeners for all chat windows
-        const setupRealtimeListeners = () => {
-            if (!isAuthReady) return;
-
-            // Doctor Chat Listener (Public chat)
-            // Path: artifacts/{appId}/public_chats/doctor/messages
-            const doctorChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'doctor', 'messages');
-            onSnapshot(doctorChatQuery, (snapshot) => {
-                const messagesDiv = document.getElementById('doctorMessages');
-                messagesDiv.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
-                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
-                });
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            });
-
-            // Mothers Group Chat Listener (Public chat)
-            // Path: artifacts/{appId}/public_chats/mothers_group/messages
-            const mothersChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'mothers_group', 'messages');
-            onSnapshot(mothersChatQuery, (snapshot) => {
-                const messagesDiv = document.getElementById('mothersMessages');
-                messagesDiv.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
-                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
-                });
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            });
-
-            // AI Chat Listener (Private chat)
-            // Path: artifacts/{appId}/ai_chat_sessions/{userId}/messages
-            const aiChatQuery = collection(db, 'artifacts', appId, 'ai_chat_sessions', userId, 'messages');
-            onSnapshot(aiChatQuery, (snapshot) => {
-                const messagesDiv = document.getElementById('aiMessages');
-                messagesDiv.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const messageClass = data.senderId === userId ? 'user-message' : 'ai-message';
-                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
-                });
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            });
-        };
-
-        // Handles sending messages and saving to Firestore
-        window.sendMessage = async (type) => {
-            if (!isAuthReady) {
-                console.error("User not authenticated.");
-                return;
-            }
-
-            const input = document.getElementById(`${type}Input`);
-            const message = input.value.trim();
-            if (!message) return;
-
-            input.value = '';
-
-            let targetCollectionRef;
-            let senderName = 'Patient';
-            const senderId = userId;
-
-            if (type === 'doctor') {
-                targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'doctor', 'messages');
-            } else if (type === 'mothers') {
-                targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'mothers_group', 'messages');
-            } else if (type === 'ai') {
-                // Use the new, more robust path for private AI chats
-                targetCollectionRef = collection(db, 'artifacts', appId, 'ai_chat_sessions', userId, 'messages');
-                senderName = 'You';
-                
-                // Handle AI response generation
-                document.getElementById('loading-indicator').style.display = 'block';
-                const aiResponse = await generateAIResponse(message);
-                document.getElementById('loading-indicator').style.display = 'none';
-                
-                // Save AI response to database
-                await addDoc(targetCollectionRef, {
-                    sender: 'AI Agent',
-                    senderId: 'AI',
-                    text: aiResponse,
-                    timestamp: serverTimestamp()
-                });
-            }
-
-            // Save user message to database
-            if (targetCollectionRef) {
-                await addDoc(targetCollectionRef, {
-                    sender: senderName,
-                    senderId: senderId,
-                    text: message,
-                    timestamp: serverTimestamp()
-                });
-            }
-        };
-
-        // Function to generate an AI response using the Gemini API
-        const generateAIResponse = async (prompt) => {
-            const chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-            const payload = { contents: chatHistory };
-            const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                return text || "I'm sorry, I couldn't generate a response.";
-            } catch (error) {
-                console.error("Gemini API call failed:", error);
-                return "I'm sorry, I am unable to connect to the AI agent at this moment.";
-            }
-        };
-
-        // Handles saving medical history form data to Firestore
-        document.getElementById('medicalForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!isAuthReady) {
-                console.error("User not authenticated. Cannot save form data.");
-                return;
-            }
-
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'medical_history', 'patient_details');
-                await setDoc(docRef, data);
-                // Replace alert with custom modal for better UX
-                const customAlert = document.createElement('div');
-                customAlert.textContent = "Medical details saved successfully!";
-                customAlert.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background-color: #22c55e;
-                    color: white;
-                    padding: 20px;
-                    border-radius: 10px;
-                    z-index: 1000;
-                `;
-                document.body.appendChild(customAlert);
-                setTimeout(() => {
-                    document.body.removeChild(customAlert);
-                }, 3000);
-            } catch (error) {
-                console.error("Error saving medical details:", error);
-                const customAlert = document.createElement('div');
-                customAlert.textContent = "Failed to save medical details. Please try again.";
-                customAlert.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background-color: #ef4444;
-                    color: white;
-                    padding: 20px;
-                    border-radius: 10px;
-                    z-index: 1000;
-                `;
-                document.body.appendChild(customAlert);
-                setTimeout(() => {
-                    document.body.removeChild(customAlert);
-                }, 3000);
-            }
-        });
-
-        // Tab switching logic
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.chat-window').forEach(w => w.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById(btn.dataset.tab).classList.add('active');
-            });
-        });
-
-        // Symptom alert system logic
-        document.getElementById('currentSymptoms').addEventListener('input', function () {
-            const symptoms = this.value.toLowerCase();
-            const alertList = document.getElementById('alertList');
-            alertList.innerHTML = '';
-
-            const dangerSigns = [
-                { keyword: 'bleeding', message: 'Possible severe bleeding (postpartum hemorrhage) — seek urgent care.' },
-                { keyword: 'severe headache', message: 'Could indicate preeclampsia — consult your doctor immediately.' },
-                { keyword: 'swelling', message: 'Swelling in face/hands may be a sign of high blood pressure.' },
-                { keyword: 'fever', message: 'Fever could be a sign of infection (puerperal sepsis) — seek urgent care.' },
-                { keyword: 'difficulty breathing', message: 'Difficulty breathing or chest pain can be a sign of a serious complication like pulmonary embolism. Go to the hospital immediately.' },
-                { keyword: 'blurred vision', message: 'Sudden blurred vision can be a symptom of preeclampsia. Contact your doctor immediately.' },
-                { keyword: 'abdominal pain', message: 'Severe abdominal pain could be a sign of a number of issues including a placental abruption or an ectopic pregnancy. Contact your doctor or emergency services.' },
-                { keyword: 'unusual vaginal discharge', message: 'Unusual or foul-smelling discharge could be a sign of infection. Consult your doctor.' }
-            ];
-
-            dangerSigns.forEach(sign => {
-                if (symptoms.includes(sign.keyword)) {
-                    const li = document.createElement('li');
-                    li.textContent = sign.message;
-                    alertList.appendChild(li);
-                }
-            });
-        });
-    </script>
 </head>
 <body>
     <header>
@@ -572,7 +311,7 @@
             </form>
         </section>
 
-        <!-- Right Side: Chat, Alerts, and Information -->
+        <!-- Chat, Alerts, and Information -->
         <section class="communication-section">
             <div class="chat-tabs">
                 <button class="tab-btn active" data-tab="doctorChat">Doctor</button>
@@ -665,11 +404,226 @@
                     <li>Blood test: 20th August 2025</li>
                 </ul>
             </div>
-        </section>
+    </section>
     </main>
 
     <div class="footer">
         <p id="userIdDisplay">User ID: N/A</p>
     </div>
+    <script type="module">
+        // Step 1: Initialize Firebase and handle authentication
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // This line receives the config from your Flask backend
+        const firebaseConfig = JSON.parse('{{ firebase_config|safe }}');
+        const appId = firebaseConfig.appId;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth, userId;
+        let isAuthReady = false;
+
+        const initFirebase = async () => {
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.error("Firebase config is missing.");
+                return;
+            }
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    isAuthReady = true;
+                    console.log("User authenticated:", userId);
+                    document.getElementById('userIdDisplay').textContent = `Your User ID: ${userId}`;
+                    setupRealtimeListeners();
+                } else {
+                    console.log("No user authenticated. Signing in...");
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Authentication failed:", error);
+                    }
+                }
+            });
+        };
+
+        initFirebase();
+
+        // Step 2: Define your core functions (listeners and sendMessage)
+        const setupRealtimeListeners = () => {
+            if (!isAuthReady) return;
+
+            // Doctor Chat Listener (Public chat)
+            const doctorChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'doctor', 'messages');
+            onSnapshot(doctorChatQuery, (snapshot) => {
+                const messagesDiv = document.getElementById('doctorMessages');
+                messagesDiv.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
+                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+                });
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            });
+
+            // Mothers Group Chat Listener (Public chat)
+            const mothersChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'mothers_group', 'messages');
+            onSnapshot(mothersChatQuery, (snapshot) => {
+                const messagesDiv = document.getElementById('mothersMessages');
+                messagesDiv.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
+                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+                });
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            });
+
+            // AI Chat Listener (Private chat)
+            const aiChatQuery = collection(db, 'artifacts', appId, 'ai_chat_sessions', userId, 'messages');
+            onSnapshot(aiChatQuery, (snapshot) => {
+                const messagesDiv = document.getElementById('aiMessages');
+                messagesDiv.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const messageClass = data.senderId === userId ? 'user-message' : 'ai-message';
+                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
+                });
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            });
+        };
+        
+        // This is the complete, working sendMessage function
+        window.sendMessage = async (type) => {
+            if (!isAuthReady) {
+                console.error("User not authenticated.");
+                return;
+            }
+
+            const input = document.getElementById(`${type}Input`);
+            const message = input.value.trim();
+            if (!message) return;
+
+            input.value = '';
+
+            let targetCollectionRef;
+            let senderName = 'Patient';
+            const senderId = userId;
+
+            if (type === 'doctor') {
+                targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'doctor', 'messages');
+                try {
+                    await addDoc(targetCollectionRef, {
+                        text: message,
+                        sender: senderName,
+                        senderId: senderId,
+                        timestamp: serverTimestamp()
+                    });
+                } catch (error) {
+                    console.error("Error writing message to Firestore:", error);
+                }
+            } else if (type === 'mothers') {
+                targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'mothers_group', 'messages');
+                try {
+                    await addDoc(targetCollectionRef, {
+                        text: message,
+                        sender: senderName,
+                        senderId: senderId,
+                        timestamp: serverTimestamp()
+                    });
+                } catch (error) {
+                    console.error("Error writing message to Firestore:", error);
+                }
+            } else if (type === 'ai') {
+                const messagesDiv = document.getElementById('aiMessages');
+                const loadingIndicator = document.getElementById('loading-indicator');
+                
+                messagesDiv.innerHTML += `<div class="user-message"><strong>You:</strong> ${message}</div>`;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+                loadingIndicator.style.display = 'block';
+
+                try {
+                    const response = await fetch('/api/chat/ai', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+                    const data = await response.json();
+                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Agent:</strong> ${data.response}</div>`;
+                } catch (error) {
+                    console.error("AI API call failed:", error);
+                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Agent:</strong> I'm sorry, I am unable to connect at this moment.</div>`;
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+            }
+        };
+
+        // Step 3: Handle form submission and tab switching
+        document.getElementById('medicalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!isAuthReady) {
+                console.error("User not authenticated. Cannot save form data.");
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'medical_history', 'patient_details');
+                await setDoc(docRef, data);
+                // ... (your existing alert logic) ...
+            } catch (error) {
+                console.error("Error saving medical details:", error);
+                // ... (your existing error alert logic) ...
+            }
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.chat-window').forEach(w => w.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        document.getElementById('currentSymptoms').addEventListener('input', function () {
+            // ... (your existing symptom alert logic) ...
+            const symptoms = this.value.toLowerCase();
+            const alertList = document.getElementById('alertList');
+            alertList.innerHTML = '';
+            const dangerSigns = [
+                { keyword: 'bleeding', message: 'Possible severe bleeding (postpartum hemorrhage) — seek urgent care.' },
+                { keyword: 'severe headache', message: 'Could indicate preeclampsia — consult your doctor immediately.' },
+                { keyword: 'swelling', message: 'Swelling in face/hands may be a sign of high blood pressure.' },
+                { keyword: 'fever', message: 'Fever could be a sign of infection (puerperal sepsis) — seek urgent care.' },
+                { keyword: 'difficulty breathing', message: 'Difficulty breathing or chest pain can be a sign of a serious complication like pulmonary embolism. Go to the hospital immediately.' },
+                { keyword: 'blurred vision', message: 'Sudden blurred vision can be a symptom of preeclampsia. Contact your doctor immediately.' },
+                { keyword: 'abdominal pain', message: 'Severe abdominal pain could be a sign of a number of issues including a placental abruption or an ectopic pregnancy. Contact your doctor or emergency services.' },
+                { keyword: 'unusual vaginal discharge', message: 'Unusual or foul-smelling discharge could be a sign of infection. Consult your doctor.' }
+            ];
+            dangerSigns.forEach(sign => {
+                if (symptoms.includes(sign.keyword)) {
+                    const li = document.createElement('li');
+                    li.textContent = sign.message;
+                    alertList.appendChild(li);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

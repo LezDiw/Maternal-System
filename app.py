@@ -2,6 +2,19 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import re
+import requests
+from flask import jsonify, request
+import json
+
+firebase_config = {
+    "apiKey": "AIzaSyC3N9k_h5A8vrJJvJHSEnC-iynNMUHUkG4",
+    "authDomain": "maternal-care-app-33eac.firebaseapp.com",
+    "projectId": "maternal-care-app-33eac",
+    "storageBucket": "maternal-care-app-33eac.appspot,com",
+    "messagingSenderId": "199844547762",
+    "appId": "1:199844547762:web:940f687ec11b3b5d8c0dab",
+    "measurementId": "G-EQYXFVCWHK"
+  };
 
 app = Flask(__name__)
 app.secret_key = 'yoursecretkey'
@@ -115,7 +128,9 @@ def register():
 # Dashboards
 @app.route('/patient')
 def patient_dashboard():
-    return render_template('Patient.html')
+    if 'loggedin' in session:
+        return render_template('Patient.html' , firebase_config=json.dumps(firebase_config))
+    return redirect(url_for('login'))
 
 @app.route('/family')
 def family_dashboard():
@@ -134,6 +149,47 @@ def logout():
     session.pop('role', None)
     flash("You have been logged out", "info")
     return redirect(url_for('home_page'))
+
+@app.route('/api/chat/ai', methods=['POST'])
+def chat_with_ai():
+    data = request.json
+    user_message = data.get('message')
+
+    if not user_message:
+        return jsonify({'error': 'No message provided'}), 400
+
+    try:
+        # Replace with the actual URL and your API key for the AI service you choose
+        # For this example, we'll use a placeholder for Google's Gemini API
+        API_KEY = "YOUR_GEMINI_API_KEY"
+        API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={API_KEY}"
+
+        # Prepare the request payload for the AI model
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": user_message}
+                    ]
+                }
+            ]
+        }
+
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        # Send the request to the AI service
+        response = requests.post(API_URL, json=payload, headers=headers)
+        response.raise_for_status()  # Raise an exception for bad status codes
+
+        ai_response_text = response.json()['candidates'][0]['content']['parts'][0]['text']
+
+        return jsonify({'response': ai_response_text})
+
+    except Exception as e:
+        print(f"Error communicating with AI service: {e}")
+        return jsonify({'error': 'Failed to get a response from the AI agent.'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
