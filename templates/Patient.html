@@ -140,9 +140,9 @@
             flex-direction: column;
             flex: 1;
             border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .chat-window.active {
@@ -259,7 +259,6 @@
             padding-left: 20px;
         }
     </style>
-
 </head>
 <body>
     <header>
@@ -267,7 +266,6 @@
     </header>
 
     <main class="dashboard">
-        <!-- Left Side: Medical History Form and Information -->
         <section class="form-section">
             <h2>Medical History & Current Pregnancy</h2>
             <form id="medicalForm">
@@ -311,7 +309,6 @@
             </form>
         </section>
 
-        <!-- Chat, Alerts, and Information -->
         <section class="communication-section">
             <div class="chat-tabs">
                 <button class="tab-btn active" data-tab="doctorChat">Doctor</button>
@@ -320,8 +317,13 @@
                 <button class="tab-btn" data-tab="infoSection">Awareness</button>
             </div>
 
-            <!-- Chat Windows -->
             <div class="chat-window active" id="doctorChat">
+                <div class="flex items-center mb-4">
+                    <label for="doctorSelect" class="font-medium mr-2">Select Doctor:</label>
+                    <select id="doctorSelect" class="flex-1 p-2 border border-gray-300 rounded-md">
+                       <option value="">Select a Doctor</option>
+                    </select>
+                </div>
                 <div class="chat-messages" id="doctorMessages"></div>
                 <div class="flex">
                     <input type="text" id="doctorInput" placeholder="Type message to Doctor...">
@@ -346,7 +348,6 @@
                 </div>
             </div>
             
-            <!-- Information Section -->
             <div class="content-section chat-window" id="infoSection">
                 <h2>Maternal Mortality: Causes & Prevention</h2>
                 <div class="info-content">
@@ -394,7 +395,6 @@
                 </div>
             </div>
 
-            <!-- Alerts & Reminders -->
             <div class="alerts-section">
                 <h3>Alerts</h3>
                 <ul id="alertList"></ul>
@@ -410,220 +410,140 @@
     <div class="footer">
         <p id="userIdDisplay">User ID: N/A</p>
     </div>
-    <script type="module">
-        // Step 1: Initialize Firebase and handle authentication
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, onSnapshot, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // This line receives the config from your Flask backend
-        const firebaseConfig = JSON.parse('{{ firebase_config|safe }}');
-        const appId = firebaseConfig.appId;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    <script>
+        const setupEventHandlers = () => {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.chat-window').forEach(w => w.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(btn.dataset.tab).classList.add('active');
+                });
+            });
 
-        let db, auth, userId;
-        let isAuthReady = false;
+            document.getElementById('medicalForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                console.log("Saving form data:", data);
+                alert("Medical details saved successfully (simulated). Check the console for the data.");
+            });
 
-        const initFirebase = async () => {
-            if (Object.keys(firebaseConfig).length === 0) {
-                console.error("Firebase config is missing.");
-                return;
-            }
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    isAuthReady = true;
-                    console.log("User authenticated:", userId);
-                    document.getElementById('userIdDisplay').textContent = `Your User ID: ${userId}`;
-                    setupRealtimeListeners();
-                } else {
-                    console.log("No user authenticated. Signing in...");
-                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
+            window.sendMessage = (type) => {
+                let input, messagesDiv, simulatedResponse;
+
+                if (type === 'doctor') {
+                    input = document.getElementById('doctorInput');
+                    messagesDiv = document.getElementById('doctorMessages');
+                    simulatedResponse = "Thank you for your message. I'll get back to you shortly.";
+                } else if (type === 'mothers') {
+                    input = document.getElementById('mothersInput');
+                    messagesDiv = document.getElementById('mothersMessages');
+                    simulatedResponse = "That's a great question! I had a similar experience. What worked for me was...";
+                } else if (type === 'ai') {
+                    input = document.getElementById('aiInput');
+                    messagesDiv = document.getElementById('aiMessages');
+                    const lowerCaseMessage = input.value.toLowerCase();
+                    const aiResponses = {
+                        'preeclampsia': 'Preeclampsia is a serious condition in pregnancy characterized by high blood pressure. Key signs include persistent headaches, blurred vision, and sudden swelling in the face or hands.',
+                        'bleeding': 'Heavy bleeding, also known as haemorrhage, is a major cause of maternal mortality. Any unusual or heavy bleeding should be reported to your doctor immediately.',
+                        'fever': 'A high fever during or after pregnancy could be a sign of an infection, such as puerperal sepsis. It is crucial to seek urgent medical care.',
+                        'haemorrhage': 'A haemorrhage is severe bleeding. It is the leading cause of maternal mortality globally and in Kenya, often occurring after childbirth. Prompt medical attention is vital if you experience heavy bleeding.',
+                        'default': 'I am an AI agent here to provide you with basic information. Please ask me about pregnancy symptoms or common conditions like preeclampsia.',
+                    };
+                    let matchedResponse = aiResponses['default'];
+                    for (const keyword in aiResponses) {
+                        if (lowerCaseMessage.includes(keyword)) {
+                            matchedResponse = aiResponses[keyword];
+                            break;
                         }
-                    } catch (error) {
-                        console.error("Authentication failed:", error);
                     }
+                    simulatedResponse = matchedResponse;
                 }
-            });
-        };
-
-        initFirebase();
-
-        // Step 2: Define your core functions (listeners and sendMessage)
-        const setupRealtimeListeners = () => {
-            if (!isAuthReady) return;
-
-            // Doctor Chat Listener (Public chat)
-            const doctorChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'doctor', 'messages');
-            onSnapshot(doctorChatQuery, (snapshot) => {
-                const messagesDiv = document.getElementById('doctorMessages');
-                messagesDiv.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
-                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
-                });
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            });
-
-            // Mothers Group Chat Listener (Public chat)
-            const mothersChatQuery = collection(db, 'artifacts', appId, 'public_chats', 'mothers_group', 'messages');
-            onSnapshot(mothersChatQuery, (snapshot) => {
-                const messagesDiv = document.getElementById('mothersMessages');
-                messagesDiv.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const messageClass = data.senderId === userId ? 'user-message' : 'other-message';
-                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
-                });
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            });
-
-            // AI Chat Listener (Private chat)
-            const aiChatQuery = collection(db, 'artifacts', appId, 'ai_chat_sessions', userId, 'messages');
-            onSnapshot(aiChatQuery, (snapshot) => {
-                const messagesDiv = document.getElementById('aiMessages');
-                messagesDiv.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const messageClass = data.senderId === userId ? 'user-message' : 'ai-message';
-                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${data.sender}:</strong> ${data.text}</div>`;
-                });
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            });
-        };
-        
-        // This is the complete, working sendMessage function
-        window.sendMessage = async (type) => {
-            if (!isAuthReady) {
-                console.error("User not authenticated.");
-                return;
-            }
-
-            const input = document.getElementById(`${type}Input`);
-            const message = input.value.trim();
-            if (!message) return;
-
-            input.value = '';
-
-            let targetCollectionRef;
-            let senderName = 'Patient';
-            const senderId = userId;
-
-            if (type === 'doctor') {
-                targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'doctor', 'messages');
-                try {
-                    await addDoc(targetCollectionRef, {
-                        text: message,
-                        sender: senderName,
-                        senderId: senderId,
-                        timestamp: serverTimestamp()
-                    });
-                } catch (error) {
-                    console.error("Error writing message to Firestore:", error);
-                }
-            } else if (type === 'mothers') {
-                targetCollectionRef = collection(db, 'artifacts', appId, 'public_chats', 'mothers_group', 'messages');
-                try {
-                    await addDoc(targetCollectionRef, {
-                        text: message,
-                        sender: senderName,
-                        senderId: senderId,
-                        timestamp: serverTimestamp()
-                    });
-                } catch (error) {
-                    console.error("Error writing message to Firestore:", error);
-                }
-            } else if (type === 'ai') {
-                const messagesDiv = document.getElementById('aiMessages');
-                const loadingIndicator = document.getElementById('loading-indicator');
                 
-                messagesDiv.innerHTML += `<div class="user-message"><strong>You:</strong> ${message}</div>`;
+                const message = input.value.trim();
+                if (!message) return;
+
+                const userMessageDiv = document.createElement('div');
+                userMessageDiv.className = 'user-message';
+                userMessageDiv.innerHTML = `<strong>You:</strong> ${message}`;
+                messagesDiv.appendChild(userMessageDiv);
+
+                input.value = '';
+
+                if (type !== 'ai') {
+                    setTimeout(() => {
+                        const otherMessageDiv = document.createElement('div');
+                        otherMessageDiv.className = 'other-message';
+                        otherMessageDiv.innerHTML = `<strong>${type === 'doctor' ? 'Doctor' : 'Mothers Group'}:</strong> ${simulatedResponse}`;
+                        messagesDiv.appendChild(otherMessageDiv);
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }, 1000);
+                } else {
+                    const loadingIndicator = document.getElementById('loading-indicator');
+                    loadingIndicator.style.display = 'block';
+                    setTimeout(() => {
+                        loadingIndicator.style.display = 'none';
+                        const aiMessageDiv = document.createElement('div');
+                        aiMessageDiv.className = 'ai-message';
+                        aiMessageDiv.innerHTML = `<strong>AI Agent:</strong> ${simulatedResponse}`;
+                        messagesDiv.appendChild(aiMessageDiv);
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }, 1500);
+                }
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            };
 
-                loadingIndicator.style.display = 'block';
-
-                try {
-                    const response = await fetch('/api/chat/ai', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ message: message })
-                    });
-                    const data = await response.json();
-                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Agent:</strong> ${data.response}</div>`;
-                } catch (error) {
-                    console.error("AI API call failed:", error);
-                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Agent:</strong> I'm sorry, I am unable to connect at this moment.</div>`;
-                } finally {
-                    loadingIndicator.style.display = 'none';
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                }
-            }
+            document.getElementById('currentSymptoms').addEventListener('input', function () {
+                const symptoms = this.value.toLowerCase();
+                const alertList = document.getElementById('alertList');
+                alertList.innerHTML = '';
+                const dangerSigns = [
+                    { keyword: 'bleeding', message: 'Possible severe bleeding (postpartum hemorrhage) — seek urgent care.' },
+                    { keyword: 'severe headache', message: 'Could indicate preeclampsia — consult your doctor immediately.' },
+                    { keyword: 'swelling', message: 'Swelling in face/hands may be a sign of high blood pressure.' },
+                    { keyword: 'fever', message: 'Fever could be a sign of infection (puerperal sepsis) — seek urgent care.' },
+                    { keyword: 'difficulty breathing', message: 'Difficulty breathing or chest pain can be a sign of a serious complication. Go to the hospital immediately.' },
+                    { keyword: 'blurred vision', message: 'Sudden blurred vision can be a symptom of preeclampsia. Contact your doctor immediately.' },
+                    { keyword: 'abdominal pain', message: 'Severe abdominal pain could be a sign of a number of issues. Contact your doctor or emergency services.' },
+                    { keyword: 'unusual vaginal discharge', message: 'Unusual or foul-smelling discharge could be a sign of infection. Consult your doctor.' }
+                ];
+                dangerSigns.forEach(sign => {
+                    if (symptoms.includes(sign.keyword)) {
+                        const li = document.createElement('li');
+                        li.textContent = sign.message;
+                        alertList.appendChild(li);
+                    }
+                });
+            });
         };
+async function loadDoctors() {
+    try {
+        const response = await fetch('/get_doctors');
+        const doctors = await response.json();
 
-        // Step 3: Handle form submission and tab switching
-        document.getElementById('medicalForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!isAuthReady) {
-                console.error("User not authenticated. Cannot save form data.");
-                return;
-            }
+        const select = document.getElementById('doctorSelect');
+        select.innerHTML = '<option value="">Select a Doctor</option>'; // reset
 
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'medical_history', 'patient_details');
-                await setDoc(docRef, data);
-                // ... (your existing alert logic) ...
-            } catch (error) {
-                console.error("Error saving medical details:", error);
-                // ... (your existing error alert logic) ...
-            }
+        doctors.forEach(doc => {
+            const option = document.createElement('option');
+            option.value = doc.id;
+            option.textContent = `Dr. ${doc.name} (${doc.specialization})`;
+            select.appendChild(option);
         });
+    } catch (err) {
+        console.error("Error loading doctors:", err);
+    }
+}
 
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.chat-window').forEach(w => w.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById(btn.dataset.tab).classList.add('active');
-            });
-        });
+document.addEventListener('DOMContentLoaded', () => {
+    setupEventHandlers();
+    loadDoctors(); // load doctors on page load
+});
 
-        document.getElementById('currentSymptoms').addEventListener('input', function () {
-            // ... (your existing symptom alert logic) ...
-            const symptoms = this.value.toLowerCase();
-            const alertList = document.getElementById('alertList');
-            alertList.innerHTML = '';
-            const dangerSigns = [
-                { keyword: 'bleeding', message: 'Possible severe bleeding (postpartum hemorrhage) — seek urgent care.' },
-                { keyword: 'severe headache', message: 'Could indicate preeclampsia — consult your doctor immediately.' },
-                { keyword: 'swelling', message: 'Swelling in face/hands may be a sign of high blood pressure.' },
-                { keyword: 'fever', message: 'Fever could be a sign of infection (puerperal sepsis) — seek urgent care.' },
-                { keyword: 'difficulty breathing', message: 'Difficulty breathing or chest pain can be a sign of a serious complication like pulmonary embolism. Go to the hospital immediately.' },
-                { keyword: 'blurred vision', message: 'Sudden blurred vision can be a symptom of preeclampsia. Contact your doctor immediately.' },
-                { keyword: 'abdominal pain', message: 'Severe abdominal pain could be a sign of a number of issues including a placental abruption or an ectopic pregnancy. Contact your doctor or emergency services.' },
-                { keyword: 'unusual vaginal discharge', message: 'Unusual or foul-smelling discharge could be a sign of infection. Consult your doctor.' }
-            ];
-            dangerSigns.forEach(sign => {
-                if (symptoms.includes(sign.keyword)) {
-                    const li = document.createElement('li');
-                    li.textContent = sign.message;
-                    alertList.appendChild(li);
-                }
-            });
-        });
+        // Initialize event handlers once the DOM is loaded
+        // document.addEventListener('DOMContentLoaded', setupEventHandlers);
     </script>
 </body>
 </html>
