@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Family/Friends Dashboard</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
 <style>
     body {
         font-family: 'Inter', sans-serif;
@@ -341,8 +341,15 @@
         let payload = {};
 
         if (type === 'ai') {
-            endpoint = '/api/ai_chat';
-            payload = { prompt: message };
+            endpoint = 'https://api.openai.com/v1/chat/completions'; // Direct API call
+            payload = { 
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: message }]
+            };
+
+            // Display user's message
+            messagesDiv.innerHTML += `<div class="user-message"><strong>You:</strong> ${message}</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
             // Display loading indicator
             const loadingIndicator = document.getElementById('loading-indicator');
@@ -351,12 +358,22 @@
             try {
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer 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` // Replace with your key
+                    },
                     body: JSON.stringify(payload)
                 });
+
                 const result = await response.json();
                 loadingIndicator.style.display = 'none'; // Hide loading indicator
-                messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> ${result.response}</div>`;
+                
+                if (response.ok) {
+                    const aiResponse = result.choices[0].message.content;
+                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> ${aiResponse}</div>`;
+                } else {
+                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> Error: ${result.error.message}</div>`;
+                }
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             } catch (error) {
                 console.error('Error sending message to AI:', error);

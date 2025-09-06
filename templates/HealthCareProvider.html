@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Healthcare Provider Dashboard</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
 <style>
     body {
         font-family: 'Inter', sans-serif;
@@ -250,6 +250,12 @@
         gap: 1.5rem;
         margin-top: 1.5rem;
     }
+    #loading-indicator {
+        display: none;
+        text-align: center;
+        padding: 1rem;
+        color: #475569;
+    }
 </style>
 </head>
 <body>
@@ -282,7 +288,7 @@
                     </tr>
                 </thead>
                 <tbody id="patientList">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </section>
@@ -313,6 +319,7 @@
                 <label for="providerSelect" class="font-medium mr-2">Select Provider:</label>
                 <select id="providerSelect" class="flex-1 p-2 border border-gray-300 rounded-md">
                     <option value="">Select a Provider</option>
+                </option>
                 </select>
             </div>
             <div class="chat-messages" id="providerMessages"></div>
@@ -324,6 +331,7 @@
 
         <div class="chat-window" id="aiChat">
             <div class="chat-messages" id="aiMessages"></div>
+            <div id="loading-indicator">AI Assistant is typing...</div>
             <div class="chat-input-container">
                 <input type="text" id="aiInput" placeholder="Ask AI Assistant...">
                 <button class="send-btn" onclick="sendMessage('ai')">Send</button>
@@ -470,28 +478,89 @@
     };
 
     // --- User Interaction Functions ---
-    window.sendMessage = (type) => {
+    window.sendMessage = async (type) => {
         const input = document.getElementById(`${type}Input`);
-        const messagesDiv = document.getElementById(`${type}Messages`);
         const message = input.value.trim();
         if (!message) return;
         input.value = '';
 
-        let senderName = 'You';
-        let messageClass = 'user-message';
-
-        messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${senderName}:</strong> ${message}</div>`;
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        const messagesDiv = document.getElementById(`${type}Messages`);
+        let senderId = 'provider_1';
+        let recipientId;
+        let endpoint = '';
+        let payload = {};
 
         if (type === 'ai') {
-             generateAIResponse(message, messagesDiv);
-        }
-    };
+            endpoint = 'https://api.openai.com/v1/chat/completions'; // Direct API call
+            payload = { 
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: message }]
+            };
 
-    const generateAIResponse = (prompt, messagesDiv) => {
-        const aiResponse = `I have received your request regarding: "${prompt}". Please provide more details.`;
-        messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> ${aiResponse}</div>`;
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            // Display user's message
+            messagesDiv.innerHTML += `<div class="user-message"><strong>You:</strong> ${message}</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Display loading indicator
+            const loadingIndicator = document.getElementById('loading-indicator');
+            loadingIndicator.style.display = 'block';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer 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` // Replace with your key
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                loadingIndicator.style.display = 'none'; // Hide loading indicator
+                
+                if (response.ok) {
+                    const aiResponse = result.choices[0].message.content;
+                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> ${aiResponse}</div>`;
+                } else {
+                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> Error: ${result.error.message}</div>`;
+                }
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (error) {
+                console.error('Error sending message to AI:', error);
+                loadingIndicator.style.display = 'none';
+                messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> I'm sorry, I am unable to connect to the AI agent at this moment.</div>`;
+            }
+
+        } else if (type === 'patient' || type === 'provider') {
+            const selectElement = document.getElementById(`${type}Select`);
+            recipientId = selectElement.value;
+
+            if (!recipientId) {
+                alert(`Please select a ${type} to send a message to.`);
+                return;
+            }
+
+            endpoint = '/api/chats/private';
+            payload = { sender_id: senderId, recipient_id: recipientId, text: message };
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    await pollChat(recipientId, type); // Refresh chat after sending
+                } else {
+                    const error = await response.json();
+                    alert('Error sending message: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to connect to the server.');
+            }
+        }
     };
 
     window.viewPatient = (patientId) => {
