@@ -41,11 +41,18 @@ class Message(db.Model):
 load_dotenv("app.env")
 print("API Key Loaded:", os.getenv("OPENAI_API_KEY") is not None)
 
-# MySQL configuration
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root' 
-app.config['MYSQL_PASSWORD'] = 'E_lizabeth03' 
-app.config['MYSQL_DB'] = 'maternal_care_system'
+if 'CLEARDB_DATABASE_URL' in os.environ:
+    # Production database from Heroku Add-on
+    app.config['MYSQL_HOST'] = os.environ.get('CLEARDB_DATABASE_URL').split('@')[1].split(':')[0]
+    app.config['MYSQL_USER'] = os.environ.get('CLEARDB_DATABASE_URL').split(':')[1][2:]
+    app.config['MYSQL_PASSWORD'] = os.environ.get('CLEARDB_DATABASE_URL').split(':')[2].split('@')[0]
+    app.config['MYSQL_DB'] = os.environ.get('CLEARDB_DATABASE_URL').split('/')[3].split('?')[0]
+else:
+    # Local development database
+    app.config['MYSQL_HOST'] = 'localhost'
+    app.config['MYSQL_USER'] = 'root'
+    app.config['MYSQL_PASSWORD'] = 'E_lizabeth03'
+    app.config['MYSQL_DB'] = 'maternal_care_system'
 
 mysql = MySQL(app)
 
