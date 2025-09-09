@@ -8,6 +8,12 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+app = Flask(__name__)
+app.secret_key = 'yoursecretkey'
 
 firebase_config = {
     "apiKey": "AIzaSyC3N9k_h5A8vrJJvJHSEnC-iynNMUHUkG4",
@@ -19,11 +25,18 @@ firebase_config = {
     "measurementId": "G-EQYXFVCWHK"
   }
 
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://<Root>:<E_lizabeth03>@<127.0.0.1>/maternal_care_system'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
+class Message(db.Model):
+    __tablename__ = 'messages'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    sender_id = db.Column(db.Integer, nullable=False)
+    receiver_id = db.Column(db.Integer)  # Corrected to match table
+    content = db.Column(db.Text, nullable=False) # Corrected to match table
+    sent_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
 
-
-app = Flask(__name__)
-app.secret_key = 'yoursecretkey'
 
 load_dotenv("app.env")
 print("API Key Loaded:", os.getenv("OPENAI_API_KEY") is not None)
@@ -134,6 +147,63 @@ def register():
         mysql.connection.commit()
         flash("You have successfully registered!", "success")
         return redirect(url_for('home_page'))
+    
+@app.route('/api/chat/send', methods=['POST'])
+def send_message():
+    data = request.json
+    sender_id_str = data.get('sender_id')
+    receiver_id_str = data.get('receiver_id')
+    message_content = data.get('message')
+
+    # Ensure required fields are present
+    if not all([sender_id_str, receiver_id_str, message_content]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Convert sender and receiver IDs to integers
+    try:
+        sender_id = int(sender_id_str)
+        receiver_id = int(receiver_id_str)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid sender_id or receiver_id format"}), 400
+
+    # Create a new message instance and add it to the database
+    new_message = Message(
+        sender_id=sender_id,
+        receiver_id=receiver_id,
+        content=message_content
+    )
+    db.session.add(new_message)
+    db.session.commit()
+
+    return jsonify({"status": "success", "message": "Message sent"}), 200
+# New API endpoint to get chat history
+@app.route('/api/chat/history/<user_id>/<recipient_id>', methods=['GET'])
+def get_chat_history(user_id, recipient_id):
+    # Convert IDs to integers
+    try:
+        user_id_int = int(user_id)
+        recipient_id_int = int(recipient_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid user ID or recipient ID"}), 400
+
+    # Query for messages where the user is either the sender or receiver
+    messages = Message.query.filter(
+        db.or_(
+            db.and_(Message.sender_id == user_id_int, Message.receiver_id == recipient_id_int),
+            db.and_(Message.sender_id == recipient_id_int, Message.receiver_id == user_id_int)
+        )
+    ).order_by(Message.sent_at.asc()).all()
+
+    # Format the data for the front-end
+    messages_list = [{
+        "sender_id": m.sender_id,
+        "receiver_id": m.receiver_id,
+        "message": m.content,
+        "timestamp": m.sent_at.isoformat()
+    } for m in messages]
+
+    return jsonify(messages_list)
+
 
 # Dashboards
 @app.route('/patient')
