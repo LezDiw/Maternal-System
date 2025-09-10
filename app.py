@@ -8,7 +8,6 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
-<<<<<<< HEAD
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -54,7 +53,6 @@ else:
     app.config['MYSQL_USER'] = 'root'
     app.config['MYSQL_PASSWORD'] = 'E_lizabeth03'
     app.config['MYSQL_DB'] = 'maternal_care_system'
-=======
 
 firebase_config = {
     "apiKey": "AIzaSyC3N9k_h5A8vrJJvJHSEnC-iynNMUHUkG4",
@@ -80,7 +78,6 @@ app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root' 
 app.config['MYSQL_PASSWORD'] = 'E_lizabeth03' 
 app.config['MYSQL_DB'] = 'maternal_care_system'
->>>>>>> 5d0402b6edf9488717942e34e1fd7d35d1fe0828
 
 mysql = MySQL(app)
 
@@ -140,7 +137,8 @@ def login():
             else:
             #flash("Incorrect username, password, or role", "error")
                 return redirect(url_for('login-page'))
-    return render_template('Patient.html')       
+        else:
+            return render_template('Patient.html')       
 
 # Registration route
 @app.route('/register', methods=['POST'])
@@ -182,7 +180,7 @@ def register():
         mysql.connection.commit()
         flash("You have successfully registered!", "success")
         return redirect(url_for('home_page'))
-<<<<<<< HEAD
+
     
 @app.route('/api/chat/send', methods=['POST'])
 def send_message():
@@ -391,9 +389,6 @@ def ai_chat():
     except Exception as e:
         return jsonify({"error": str(e), "response": "I am unable to generate a response at the moment."}), 500
 
-
-=======
-
 # Dashboards
 @app.route('/patient')
 def patient_dashboard():
@@ -544,7 +539,5 @@ def ai_chat():
     except Exception as e:
         return jsonify({"error": str(e), "response": "I am unable to generate a response at the moment."}), 500
 
-
->>>>>>> 5d0402b6edf9488717942e34e1fd7d35d1fe0828
 if __name__ == '__main__':
     app.run(debug=True)
