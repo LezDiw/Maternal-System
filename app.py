@@ -8,6 +8,7 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+<<<<<<< HEAD
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -53,6 +54,33 @@ else:
     app.config['MYSQL_USER'] = 'root'
     app.config['MYSQL_PASSWORD'] = 'E_lizabeth03'
     app.config['MYSQL_DB'] = 'maternal_care_system'
+=======
+
+firebase_config = {
+    "apiKey": "AIzaSyC3N9k_h5A8vrJJvJHSEnC-iynNMUHUkG4",
+    "authDomain": "maternal-care-app-33eac.firebaseapp.com",
+    "projectId": "maternal-care-app-33eac",
+    "storageBucket": "maternal-care-app-33eac.appspot.com",
+    "messagingSenderId": "199844547762",
+    "appId": "1:199844547762:web:940f687ec11b3b5d8c0dab",
+    "measurementId": "G-EQYXFVCWHK"
+  }
+
+
+
+
+app = Flask(__name__)
+app.secret_key = 'yoursecretkey'
+
+load_dotenv("app.env")
+print("API Key Loaded:", os.getenv("OPENAI_API_KEY") is not None)
+
+# MySQL configuration
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root' 
+app.config['MYSQL_PASSWORD'] = 'E_lizabeth03' 
+app.config['MYSQL_DB'] = 'maternal_care_system'
+>>>>>>> 5d0402b6edf9488717942e34e1fd7d35d1fe0828
 
 mysql = MySQL(app)
 
@@ -154,6 +182,7 @@ def register():
         mysql.connection.commit()
         flash("You have successfully registered!", "success")
         return redirect(url_for('home_page'))
+<<<<<<< HEAD
     
 @app.route('/api/chat/send', methods=['POST'])
 def send_message():
@@ -363,5 +392,159 @@ def ai_chat():
         return jsonify({"error": str(e), "response": "I am unable to generate a response at the moment."}), 500
 
 
+=======
+
+# Dashboards
+@app.route('/patient')
+def patient_dashboard():
+    if 'loggedin' in session:
+       # return render_template('Patient.html' , firebase_config=json.dumps(firebase_config))
+        return redirect(url_for('login'))
+
+@app.route('/family')
+def family_dashboard():
+    return render_template('FamilyFriend.html')
+
+@app.route('/healthcare')
+def healthcare_dashboard():
+    return render_template('HealthCareProvider.html')
+
+# Logout
+@app.route('/logout')
+def logout():
+    session.pop('loggedin', None)
+    session.pop('id', None)
+    session.pop('username', None)
+    session.pop('role_id', None)
+    flash("You have been logged out", "info")
+    return redirect(url_for('home_page'))
+
+@app.route('/get_doctors')
+def get_doctors():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT id, username, email FROM users WHERE role_id = (SELECT id FROM roles WHERE role_name='Healthcare Provider')")
+    doctors = cursor.fetchall()
+    cursor.close()
+
+    # Format doctors for the frontend
+    doctor_list = [
+        {"id": doc["id"], "name": doc["username"], "specialization": "Healthcare Provider"}
+        for doc in doctors
+    ]
+    return jsonify(doctor_list)
+
+# New route to get all users from the database
+@app.route('/api/users', methods=['GET'])
+def get_all_users():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT id, username AS name, role_id FROM users")
+    users = cursor.fetchall()
+    cursor.close()
+    return jsonify(users)
+
+# Route to get all patients (role_id = 1)
+@app.route('/api/patients', methods=['GET'])
+def get_patients():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT id, username AS name, role_id, status, last_checkin FROM users WHERE role_id = 1")
+    patients = cursor.fetchall()
+    cursor.close()
+    return jsonify(patients)
+
+# New route to get healthcare providers (role_id = 3)
+@app.route('/api/providers', methods=['GET'])
+def get_providers():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT id, username AS name, role_id FROM users WHERE role_id = 3")
+    providers = cursor.fetchall()
+    cursor.close()
+    return jsonify(providers)
+
+# New route to update a user's role to patient
+@app.route('/api/add_patient', methods=['POST'])
+def add_patient():
+    data = request.json
+    user_id = data.get('id')
+    status = data.get('status')
+    last_checkin = data.get('lastCheckin')
+
+    if not user_id:
+        return jsonify({'error': 'User ID is required'}), 400
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    # Update the user's details
+    try:
+        cursor.execute(
+            "UPDATE users SET role_id = 1, status = %s, last_checkin = %s WHERE id = %s",
+            (status, last_checkin, user_id)
+        )
+        mysql.connection.commit()
+        
+        # Fetch the updated user to return in the response
+        cursor.execute("SELECT id, username AS name, role_id, status, last_checkin FROM users WHERE id = %s", (user_id,))
+        updated_user = cursor.fetchone()
+        cursor.close()
+        
+        return jsonify({'message': 'Patient details updated successfully', 'patient': updated_user}), 200
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+    # New route to update an existing patient's details
+@app.route('/api/patients/<string:patient_id>', methods=['PUT'])
+def update_patient(patient_id):
+    data = request.json
+    status = data.get('status')
+    last_checkin = data.get('lastCheckin')
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    try:
+        cursor.execute(
+            "UPDATE users SET status = %s, last_checkin = %s WHERE id = %s",
+            (status, last_checkin, patient_id)
+        )
+        mysql.connection.commit()
+        
+        cursor.execute("SELECT id, username AS name, status, last_checkin FROM users WHERE id = %s", (patient_id,))
+        updated_patient = cursor.fetchone()
+        cursor.close()
+        
+        return jsonify({'message': 'Patient details updated successfully', 'patient': updated_patient}), 200
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Set your API key (better:environment variable)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+@app.route("/api/chat/ai", methods=["POST"])
+def ai_chat():
+    data = request.get_json()
+    user_message = data.get("message", "")
+
+    # Error handling: block empty messages
+    if not user_message.strip():
+        return jsonify({"response": "Please enter a question."}), 400
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",   # good for chatbots
+            messages=[
+                {"role": "system", "content": "You are a maternal healthcare assistant. Provide accurate, structured, and safe health guidance in simple language."},
+                {"role": "user", "content": user_message}
+            ],
+            max_tokens=300,
+            temperature=0.4
+        )
+
+        ai_reply = response.choices[0].message.content
+        return jsonify({"response": ai_reply})
+
+    except Exception as e:
+        return jsonify({"error": str(e), "response": "I am unable to generate a response at the moment."}), 500
+
+
+>>>>>>> 5d0402b6edf9488717942e34e1fd7d35d1fe0828
 if __name__ == '__main__':
     app.run(debug=True)
