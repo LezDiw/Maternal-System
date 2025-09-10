@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family/Friends Dashboard</title>
+<script src="https://cdn.tailwindcss.com/3.4.1"></script>
+<style>
+    /*
+        All of your custom CSS is now correctly placed after the Tailwind CDN.
+        This ensures that your custom rules will override Tailwind's
+        default styles where they conflict.
+    */
+    body {
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+    header {
+        background: #3b82f6;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        font-size: 1.5rem;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+    .dashboard {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 2rem;
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .content-section, .communication-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        min-width: 300px;
+    }
+    .content-section { flex: 2; }
+    .communication-section { flex: 1; display: flex; flex-direction: column; }
+
+    h2, h3 {
+        font-weight: bold;
+        color: #1e40af;
+        margin-bottom: 1rem;
+    }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
+
+    .chat-tabs {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 1rem;
+    }
+    .tab-btn {
+        flex: 1;
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        background: #e2e8f0;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    .tab-btn.active {
+        background: #3b82f6;
+        color: white;
+    }
+    .chat-window {
+        display: none;
+        flex-direction: column;
+        flex: 1;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .chat-window.active { display: flex; }
+    .chat-messages {
+        flex-grow: 1;
+        background: #f8fafc;
+        padding: 0.5rem;
+        overflow-y: auto;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        max-height: 400px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .chat-messages .user-message {
+        background-color: #e2f2ff;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-end;
+        max-width: 80%;
+    }
+    .chat-messages .other-message {
+        background-color: #f0f4f8;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-start;
+        max-width: 80%;
+    }
+    .chat-messages .ai-message {
+        background-color: #f0f4f8;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-start;
+        max-width: 80%;
+    }
+    .chat-input-container {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .chat-input-container input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+    .send-btn {
+        background: #22c55e;
+        color: white;
+        cursor: pointer;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    .send-btn:hover { background: #15803d; }
+
+    .reminders-section {
+        margin-top: 2rem;
+        background: #bfdbfe;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .reminders-section h3 {
+        color: #1e40af;
+        margin-bottom: 0.5rem;
+    }
+    .reminders-section ul {
+        list-style: none;
+        padding-left: 0;
+    }
+    .reminders-section li {
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+    }
+    .info-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-top: 2rem;
+    }
+    .info-section ul {
+        list-style-type: disc;
+        padding-left: 20px;
+        margin-bottom: 1rem;
+    }
+
+    #loading-indicator {
+        display: none;
+        text-align: center;
+        padding: 1rem;
+        color: #475569;
+    }
+
+    .footer {
+        text-align: center;
+        padding: 1rem;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+</style>
+</head>
+<body>
+<header>
+    <h1>Her Rise - Family & Friends Dashboard</h1>
+</header>
+
+<main class="dashboard">
+    <section class="content-section">
+        <h2>Supporting Expectant Mothers</h2>
+        <p>Family and friends play a crucial role in ensuring a healthy and happy pregnancy journey. Here are some ways you can provide support, based on best practices in maternal care:</p>
+
+        <h3>Emotional and Social Support</h3>
+        <ul class="list-disc pl-5 mb-4">
+            <li><strong>Be an active listener:</strong> Let her share her feelings, fears, and joys without judgment. Sometimes, just knowing someone is there to listen can make a huge difference.</li>
+            <li><strong>Encourage self-care:</strong> Remind her to rest, eat well, and engage in light physical activity. Offer to help with chores or errands so she has time for herself.</li>
+            <li><strong>Celebrate milestones:</strong> Acknowledge and celebrate each week or month of the pregnancy. This can help her feel appreciated and excited about the journey.</li>
+        </ul>
+
+        <h3>Practical Help</h3>
+        <ul class="list-disc pl-5 mb-4">
+            <li><strong>Accompany her to appointments:</strong> Offer to drive her to antenatal care visits. Having a support person can reduce stress and help her remember important information from the doctor.</li>
+            <li><strong>Assist with daily tasks:</strong> Simple gestures like cooking a meal, doing laundry, or grocery shopping can significantly reduce her physical and mental load.</li>
+            <li><strong>Help with planning:</strong> Offer to help prepare for the baby's arrival, whether it's setting up the nursery, buying baby supplies, or planning for a baby shower.</li>
+        </ul>
+
+        <h3>Watch for Red Flags</h3>
+        <ul class="list-disc pl-5 mb-4">
+            <li>Be aware of the warning signs of complications discussed in the patient dashboard. If she reports symptoms like severe headaches, swelling, or unusual pain, encourage her to contact her doctor or go to the hospital immediately.</li>
+            <li>Stay informed about her health journey through this dashboard's reminders and check-ins (without seeing private updates).</li>
+        </ul>
+    </section>
+
+    <section class="communication-section">
+        <div class="chat-tabs">
+            <button class="tab-btn active" data-tab="aiChat">AI Assistant</button>
+            <button class="tab-btn" data-tab="patientChat">Chat with Patient</button>
+            <button class="tab-btn" data-tab="doctorChat">Chat with Healthcare Provider</button>
+        </div>
+
+        <div class="chat-window active" id="aiChat">
+            <div class="chat-messages" id="aiMessages"></div>
+            <div id="loading-indicator">AI Assistant is typing...</div>
+            <div class="chat-input-container">
+                <input type="text" id="aiInput" placeholder="Ask AI for support tips...">
+                <button class="send-btn" onclick="sendMessage('ai')">Send</button>
+            </div>
+        </div>
+
+        <div class="chat-window" id="patientChat">
+            <div class="flex items-center mb-4">
+                <label for="patientSelect" class="font-medium mr-2">Select Patient:</label>
+                <select id="patientSelect" class="flex-1 p-2 border border-gray-300 rounded-md">
+                    <option value="">Select a Patient</option>
+                </select>
+            </div>
+            <div class="chat-messages" id="patientMessages"></div>
+            <div class="chat-input-container">
+                <input type="text" id="patientInput" placeholder="Send message to patient...">
+                <button class="send-btn" onclick="sendMessage('patient')">Send</button>
+            </div>
+        </div>
+
+        <div class="chat-window" id="doctorChat">
+            <div class="flex items-center mb-4">
+                <label for="doctorSelect" class="font-medium mr-2">Select Provider:</label>
+                <select id="doctorSelect" class="flex-1 p-2 border border-gray-300 rounded-md">
+                    <option value="">Select a Provider</option>
+                </select>
+            </div>
+            <div class="chat-messages" id="doctorMessages"></div>
+            <div class="chat-input-container">
+                <input type="text" id="doctorInput" placeholder="Send message to healthcare provider...">
+                <button class="send-btn" onclick="sendMessage('doctor')">Send</button>
+            </div>
+        </div>
+
+        <div class="reminders-section">
+            <h3>Reminders</h3>
+            <ul id="reminderList">
+            </ul>
+        </div>
+    </section>
+</main>
+
+<div class="footer">
+    <p id="userIdDisplay">User ID: N/A</p>
+</div>
+
+<script>
+    // Placeholder for the current user's ID
+    const currentUserId = '1'; // This should be a numerical ID that corresponds to your 'users' table
+    let chatPollInterval;
+
+    // Display the current user's ID on the page
+    document.getElementById('userIdDisplay').textContent = `Your User ID: ${currentUserId}`;
+
+    // Function to render the patient list in the dropdown
+    const renderPatients = (patients) => {
+        const patientSelect = document.getElementById('patientSelect');
+        patientSelect.innerHTML = '<option value="">Select a Patient</option>';
+        patients.forEach(patient => {
+            const option = document.createElement('option');
+            option.value = patient.id;
+            option.textContent = patient.name;
+            patientSelect.appendChild(option);
+        });
+    };
+    
+    // Function to render the provider list in the dropdown
+    const renderProviders = (providers) => {
+        const doctorSelect = document.getElementById('doctorSelect');
+        doctorSelect.innerHTML = '<option value="">Select a Provider</option>';
+        providers.forEach(provider => {
+            const option = document.createElement('option');
+            option.value = provider.id;
+            option.textContent = provider.name;
+            doctorSelect.appendChild(option);
+        });
+    };
+
+    // Function to fetch and display messages from the server
+    const pollChat = async (recipientId, chatType) => {
+        clearInterval(chatPollInterval); // Clear any existing interval
+
+        if (!recipientId) {
+            document.getElementById(`${chatType}Messages`).innerHTML = '';
+            return;
+        }
+
+        chatPollInterval = setInterval(async () => {
+            try {
+                // Fetch from the corrected backend endpoint
+                const response = await fetch(`/api/chat/history/${currentUserId}/${recipientId}`); 
+                const messages = await response.json();
+
+                const messagesDiv = document.getElementById(`${chatType}Messages`);
+                messagesDiv.innerHTML = ''; // Clear old messages
+                messages.forEach(msg => {
+                    const messageClass = msg.sender_id.toString() === currentUserId.toString() ? 'user-message' : 'other-message';
+                    messagesDiv.innerHTML += `<div class="${messageClass}"><strong>${msg.sender_id}:</strong> ${msg.message}</div>`;
+                });
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (error) {
+                console.error('Error polling chat:', error);
+            }
+        }, 3000); // Poll every 3 seconds
+    };
+
+    // Main function to send messages
+    window.sendMessage = async (type) => {
+        const input = document.getElementById(`${type}Input`);
+        const message = input.value.trim();
+        if (!message) return;
+        input.value = '';
+
+        const messagesDiv = document.getElementById(`${type}Messages`);
+        const senderId = currentUserId;
+
+        if (type === 'ai') {
+            const endpoint = '/api/chat/ai'; 
+            const payload = { message: message };
+
+            // Display user's message immediately
+            messagesDiv.innerHTML += `<div class="user-message"><strong>You:</strong> ${message}</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            const loadingIndicator = document.getElementById('loading-indicator');
+            loadingIndicator.style.display = 'block';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                loadingIndicator.style.display = 'none';
+                
+                if (response.ok) {
+                    const aiResponse = result.response;
+                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> ${aiResponse}</div>`;
+                } else {
+                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> Error: ${result.error}</div>`;
+                }
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (error) {
+                console.error('Error sending message to AI:', error);
+                loadingIndicator.style.display = 'none';
+                messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> I'm sorry, I am unable to connect to the AI agent at this moment.</div>`;
+            }
+
+        } else if (type === 'patient' || type === 'doctor') {
+            const selectElement = document.getElementById(`${type}Select`);
+            const recipientId = selectElement.value;
+
+            if (!recipientId) {
+                alert(`Please select a ${type} to send a message to.`);
+                return;
+            }
+
+            // Display user's message immediately
+            messagesDiv.innerHTML += `<div class="user-message"><strong>You:</strong> ${message}</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            try {
+                // Use the new backend endpoint for sending messages
+                const response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        sender_id: senderId,
+                        receiver_id: recipientId // Corrected to match backend
+                    })
+                });
+
+                if (response.ok) {
+                    // Refresh chat after sending
+                    setTimeout(() => {
+                        pollChat(recipientId, type);
+                    }, 500);
+                } else {
+                    const error = await response.json();
+                    alert('Error sending message: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to connect to the server.');
+            }
+        }
+    };
+
+    // Function to load public reminders
+    const loadReminders = async () => {
+        try {
+            const response = await fetch('/api/reminders');
+            const reminders = await response.json();
+            const reminderList = document.getElementById('reminderList');
+            reminderList.innerHTML = '';
+            reminders.forEach(reminder => {
+                const li = document.createElement('li');
+                li.textContent = `${reminder.text} - ${reminder.date}`;
+                reminderList.appendChild(li);
+            });
+        } catch (error) {
+            console.error('Error loading reminders:', error);
+        }
+    };
+    
+    // Function to load all necessary data
+    const loadAllData = async () => {
+        try {
+            const [patientsResponse, providersResponse] = await Promise.all([
+                fetch('/api/patients'),
+                fetch('/api/providers')
+            ]);
+            const patients = await patientsResponse.json();
+            const providers = await providersResponse.json();
+            renderPatients(patients);
+            renderProviders(providers);
+        } catch (error) {
+            console.error('Error loading patients or providers:', error);
+        }
+    };
+
+    // Tab switching functionality
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            clearInterval(chatPollInterval); // Stop polling when switching tabs
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.chat-window').forEach(w => w.classList.remove('active'));
+            btn.classList.add('active');
+            const selectedTab = document.getElementById(btn.dataset.tab);
+            selectedTab.classList.add('active');
+
+            // Restart polling for the correct chat if a recipient is selected
+            if (btn.dataset.tab === 'patientChat') {
+                const patientId = document.getElementById('patientSelect').value;
+                if (patientId) {
+                    pollChat(patientId, 'patient');
+                }
+            } else if (btn.dataset.tab === 'doctorChat') {
+                const doctorId = document.getElementById('doctorSelect').value;
+                if (doctorId) {
+                    pollChat(doctorId, 'doctor');
+                }
+            }
+        });
+    });
+
+    // Event listeners for dropdowns to start polling when a recipient is selected
+    document.getElementById('patientSelect').addEventListener('change', (event) => {
+        pollChat(event.target.value, 'patient');
+    });
+
+    document.getElementById('doctorSelect').addEventListener('change', (event) => {
+        pollChat(event.target.value, 'doctor');
+    });
+
+    // Initialize the page on load
+    window.addEventListener('DOMContentLoaded', () => {
+        loadAllData();
+        loadReminders();
+        // Set up polling for reminders to keep them updated
+        setInterval(loadReminders, 10000);
+    });
+</script>
+</body>
+</html>

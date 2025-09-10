@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Healthcare Provider Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    clifford: '#da373d',
+                }
+            }
+        }
+    }
+</script>
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+    header {
+        background: #0f172a;
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+        font-size: 1.5rem;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+    .dashboard {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 2rem;
+        gap: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    .content-section, .communication-section, .patient-details-modal, .add-patient-modal {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        min-width: 300px;
+    }
+    .content-section { flex: 2; }
+    .communication-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    h2, h3, h4 {
+        font-weight: bold;
+        color: #1e40af;
+        margin-bottom: 1rem;
+    }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
+    h4 { font-size: 1rem; }
+
+    /* Tabs for Patient List */
+    .patient-tabs {
+        display: flex;
+        justify-content: flex-start;
+        margin-bottom: 1rem;
+        gap: 0.5rem;
+    }
+    .patient-tab-btn {
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        background: #e2e8f0;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    .patient-tab-btn.active {
+        background: #3b82f6;
+        color: white;
+    }
+
+    /* Table styling */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+    th, td {
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    th {
+        background: #f8fafc;
+        color: #64748b;
+        font-weight: 600;
+    }
+    tbody tr:hover {
+        background-color: #f0f4f8;
+    }
+
+    /* Communication Section */
+    .chat-tabs {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-around;
+        margin-bottom: 1rem;
+    }
+    .tab-btn {
+        flex: 1;
+        padding: 0.75rem 0.5rem;
+        cursor: pointer;
+        background: #e2e8f0;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+        text-align: center;
+    }
+    .tab-btn.active {
+        background: #3b82f6;
+        color: white;
+    }
+    .chat-window {
+        display: none;
+        flex-direction: column;
+        flex: 1;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .chat-window.active {
+        display: flex;
+        flex: 1;
+    }
+    .chat-messages {
+        flex-grow: 1;
+        background: #f8fafc;
+        padding: 0.5rem;
+        overflow-y: auto;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        max-height: 400px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .chat-messages .user-message {
+        background-color: #e2f2ff;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-end;
+        max-width: 80%;
+    }
+    .chat-messages .other-message {
+        background-color: #f0f4f8;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-start;
+        max-width: 80%;
+    }
+    .chat-messages .ai-message {
+        background-color: #f0f4f8;
+        padding: 0.5rem;
+        border-radius: 8px;
+        align-self: flex-start;
+        max-width: 80%;
+    }
+    .chat-input-container {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .chat-input-container input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+    .send-btn {
+        background: #22c55e;
+        color: white;
+        cursor: pointer;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    .send-btn:hover { background: #15803d; }
+
+    /* Alerts and Reminders */
+    .alerts-section {
+        margin-top: 2rem;
+        background: #fff7f7;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .alerts-section h3 {
+        color: #ef4444;
+        margin-bottom: 0.5rem;
+    }
+    .alerts-section ul {
+        list-style: none;
+        padding-left: 0;
+    }
+    .alerts-section li {
+        background: #fecaca;
+        color: #991b1b;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+    }
+    .reminders-section li {
+        background: #bfdbfe;
+        color: #1e40af;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+    }
+
+    /* Modal Styling */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        max-width: 900px;
+        width: 90%;
+        position: relative;
+    }
+    .close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 2rem;
+        cursor: pointer;
+        color: #6b7280;
+    }
+    .modal-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    #loading-indicator {
+        display: none;
+        text-align: center;
+        padding: 1rem;
+        color: #475569;
+    }
+</style>
+</head>
+<body>
+<header>
+    <h1>Maternal Care System - Healthcare Provider Dashboard</h1>
+</header>
+
+<main class="dashboard">
+    <section class="content-section">
+        <div class="flex justify-between items-center mb-4">
+            <h2>My Patients</h2>
+            <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" onclick="showAddPatientModal()">Add New Patient</button>
+        </div>
+
+        <div class="patient-tabs">
+            <button class="patient-tab-btn active" data-patient-tab="all">All Patients</button>
+            <button class="patient-tab-btn" data-patient-tab="High-Risk">High-Risk</button>
+            <button class="patient-tab-btn" data-patient-tab="Needs Follow-up">Needs Follow-up</button>
+        </div>
+
+        <div id="patient-list-container">
+            <table id="patientTable">
+                <thead>
+                    <tr>
+                        <th>Patient ID</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Last Check-in</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="patientList">
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="communication-section">
+        <div class="chat-tabs">
+            <button class="tab-btn active" data-tab="patientChat">Patients</button>
+            <button class="tab-btn" data-tab="providerChat">Other Providers</button>
+            <button class="tab-btn" data-tab="aiChat">AI Assistant</button>
+        </div>
+
+        <div class="chat-window active" id="patientChat">
+            <div class="flex items-center mb-4">
+                <label for="patientSelect" class="font-medium mr-2">Select Patient:</label>
+                <select id="patientSelect" class="flex-1 p-2 border border-gray-300 rounded-md">
+                    <option value="">Select a Patient</option>
+                </select>
+            </div>
+            <div class="chat-messages" id="patientMessages"></div>
+            <div class="chat-input-container">
+                <input type="text" id="patientInput" placeholder="Type message to patient...">
+                <button class="send-btn" onclick="sendMessage('patient')">Send</button>
+            </div>
+        </div>
+
+        <div class="chat-window" id="providerChat">
+            <div class="flex items-center mb-4">
+                <label for="providerSelect" class="font-medium mr-2">Select Provider:</label>
+                <select id="providerSelect" class="flex-1 p-2 border border-gray-300 rounded-md">
+                    <option value="">Select a Provider</option>
+                </select>
+            </div>
+            <div class="chat-messages" id="providerMessages"></div>
+            <div class="chat-input-container">
+                <input type="text" id="providerInput" placeholder="Type message to other providers...">
+                <button class="send-btn" onclick="sendMessage('provider')">Send</button>
+            </div>
+        </div>
+
+        <div class="chat-window" id="aiChat">
+            <div class="chat-messages" id="aiMessages"></div>
+            <div id="loading-indicator">AI Assistant is typing...</div>
+            <div class="chat-input-container">
+                <input type="text" id="aiInput" placeholder="Ask AI Assistant...">
+                <button class="send-btn" onclick="sendMessage('ai')">Send</button>
+            </div>
+        </div>
+
+        <div class="alerts-section">
+            <h3 class="text-red-600">Critical Alerts</h3>
+            <ul id="alertList">
+            </ul>
+            <h3 class="text-blue-600">Reminders</h3>
+            <ul id="reminderList" class="reminders-section">
+            </ul>
+        </div>
+    </section>
+</main>
+
+<div id="patientDetailsModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="hideModal('patientDetailsModal')">&times;</span>
+        <h2 id="patientNameHeader">Patient Name</h2>
+        <p id="patientIdHeader" class="text-sm text-gray-500 mb-4">Patient ID: N/A</p>
+
+        <div class="modal-grid">
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <h4 class="text-gray-700">Recent Vitals</h4>
+                <ul id="vitalsList">
+                    <li>Blood Pressure: <span id="bpValue"></span></li>
+                    <li>Heart Rate: <span id="hrValue"></span></li>
+                    <li>Weight: <span id="weightValue"></span></li>
+                </ul>
+            </div>
+
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <h4 class="text-gray-700">Health Records</h4>
+                <p>View patient's full medical history and lab results.</p>
+                <button class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg">View Records</button>
+            </div>
+
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <h4 class="text-gray-700">Appointments</h4>
+                <p id="nextAppointment">Next: N/A</p>
+                <button class="mt-2 bg-green-500 text-white px-4 py-2 rounded-lg">Schedule/View All</button>
+            </div>
+
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <h4 class="text-gray-700">Prescriptions</h4>
+                <p>Manage and issue prescriptions digitally.</p>
+                <button class="mt-2 bg-purple-500 text-white px-4 py-2 rounded-lg">Manage Prescriptions</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="addPatientModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="hideModal('addPatientModal')">&times;</span>
+        <h2 id="modalTitle">Add a New Patient</h2>
+        <form id="addPatientForm" class="mt-4 space-y-4">
+            <input type="hidden" id="patientId" name="patientId">
+            <div>
+                <label for="patientNameSelect" class="block text-sm font-medium text-gray-700">Select Existing User</label>
+                <select id="patientNameSelect" name="patientNameSelect" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <option value="">Choose a user</option>
+                </select>
+            </div>
+            <div>
+                <label for="patientStatus" class="block text-sm font-medium text-gray-700">Status</label>
+                <select id="patientStatus" name="patientStatus" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <option value="Normal Pregnancy">Normal Pregnancy</option>
+                    <option value="High-Risk">High-Risk</option>
+                    <option value="Needs Follow-up">Needs Follow-up</option>
+                </select>
+            </div>
+            <div>
+                <label for="lastCheckin" class="block text-sm font-medium text-gray-700">Last Check-in Date</label>
+                <input type="date" id="lastCheckin" name="lastCheckin" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+            </div>
+            <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition">Save Patient</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let patients = [];
+    let providers = [];
+    let allUsers = [];
+
+    // --- Dynamic UI Population Functions ---
+    const renderPatients = (filteredPatients = patients) => {
+        const patientList = document.getElementById('patientList');
+        const patientSelect = document.getElementById('patientSelect');
+        patientList.innerHTML = '';
+        
+        // Populate the table with filtered patients
+        filteredPatients.forEach(patient => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${patient.id}</td>
+                <td>${patient.name}</td>
+                <td><span class="px-2 py-1 text-sm font-semibold rounded-full ${getStatusClass(patient.status)}">${patient.status}</span></td>
+                <td>${patient.last_checkin || 'N/A'}</td>
+                <td>
+                    <button class="bg-indigo-500 text-white px-3 py-1 rounded-lg hover:bg-indigo-600 transition" onclick="viewPatient('${patient.id}')">View</button>
+                    <button class="bg-yellow-500 text-white px-3 py-1 rounded-lg hover:bg-yellow-600 transition ml-2" onclick="editPatient('${patient.id}')">Edit</button>
+                    <button class="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition ml-2" onclick="selectRecipientAndSwitch('patient', '${patient.id}', '${patient.name}')">Text</button>
+                </td>
+            `;
+            patientList.appendChild(tr);
+        });
+
+        // Populate the dropdown with all patients
+        patientSelect.innerHTML = '<option value="">Select a Patient</option>';
+        patients.forEach(patient => {
+            const option = document.createElement('option');
+            option.value = patient.id;
+            option.textContent = patient.name;
+            patientSelect.appendChild(option);
+        });
+    };
+
+    const renderProviders = (filteredProviders = providers) => {
+        const providerSelect = document.getElementById('providerSelect');
+        providerSelect.innerHTML = '<option value="">Select a Provider</option>';
+        filteredProviders.forEach(provider => {
+            const option = document.createElement('option');
+            option.value = provider.id;
+            option.textContent = provider.name;
+            providerSelect.appendChild(option);
+        });
+    };
+
+    const renderUserSelection = () => {
+        const patientNameSelect = document.getElementById('patientNameSelect');
+        patientNameSelect.innerHTML = '<option value="">Choose a user</option>';
+        allUsers.forEach(user => {
+            if (user.role_id !== 1) { // Only show users who are not already patients
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.name;
+                patientNameSelect.appendChild(option);
+            }
+        });
+    };
+
+    // --- User Interaction Functions ---
+    window.sendMessage = async (type) => {
+        const input = document.getElementById(`${type}Input`);
+        const message = input.value.trim();
+        if (!message) return;
+        input.value = '';
+
+        const messagesDiv = document.getElementById(`${type}Messages`);
+        let senderId = 'provider_1';
+        let recipientId;
+        let endpoint = '';
+        let payload = {};
+
+        if (type === 'ai') {
+            // NEW: Call your secure backend API
+            endpoint = '/api/chat/ai'; 
+            payload = { message: message };
+            
+            // Display user's message
+            messagesDiv.innerHTML += `<div class="user-message"><strong>You:</strong> ${message}</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Display loading indicator
+            const loadingIndicator = document.getElementById('loading-indicator');
+            loadingIndicator.style.display = 'block';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                loadingIndicator.style.display = 'none'; // Hide loading indicator
+                
+                if (response.ok) {
+                    const aiResponse = result.response;
+                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> ${aiResponse}</div>`;
+                } else {
+                    messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> Error: ${result.error}</div>`;
+                }
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (error) {
+                console.error('Error sending message to AI:', error);
+                loadingIndicator.style.display = 'none';
+                messagesDiv.innerHTML += `<div class="ai-message"><strong>AI Assistant:</strong> I'm sorry, I am unable to connect to the AI agent at this moment.</div>`;
+            }
+
+        } else if (type === 'patient' || type === 'provider') {
+            const selectElement = document.getElementById(`${type}Select`);
+            recipientId = selectElement.value;
+
+            if (!recipientId) {
+                alert(`Please select a ${type} to send a message to.`);
+                return;
+            }
+
+            endpoint = '/api/chats/private';
+            payload = { sender_id: senderId, recipient_id: recipientId, text: message };
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    await pollChat(recipientId, type); // Refresh chat after sending
+                } else {
+                    const error = await response.json();
+                    alert('Error sending message: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to connect to the server.');
+            }
+        }
+    };
+
+    window.viewPatient = (patientId) => {
+        const patient = patients.find(p => p.id === patientId);
+        if (!patient) return;
+
+        document.getElementById('patientNameHeader').textContent = patient.name;
+        document.getElementById('patientIdHeader').textContent = `Patient ID: ${patient.id}`;
+        document.getElementById('bpValue').textContent = patient.vitals?.bloodPressure || 'N/A';
+        document.getElementById('hrValue').textContent = patient.vitals?.heartRate || 'N/A';
+        document.getElementById('weightValue').textContent = patient.vitals?.weight || 'N/A';
+        document.getElementById('nextAppointment').textContent = `Next: ${patient.nextVisit || 'N/A'}`;
+        showModal('patientDetailsModal');
+    };
+    
+    window.editPatient = (patientId) => {
+        const patient = patients.find(p => p.id === patientId);
+        if (!patient) return;
+        
+        // Set the modal title and form button text for editing
+        document.getElementById('modalTitle').textContent = `Edit Patient: ${patient.name}`;
+        document.querySelector('#addPatientForm button[type="submit"]').textContent = 'Update Patient';
+
+        // Populate the form with patient data
+        document.getElementById('patientId').value = patient.id;
+        document.getElementById('patientNameSelect').style.display = 'none'; // Hide the user dropdown for editing
+        document.getElementById('patientStatus').value = patient.status;
+        document.getElementById('lastCheckin').value = patient.last_checkin;
+        
+        showModal('addPatientModal');
+    };
+
+    window.selectRecipientAndSwitch = (type, recipientId, recipientName) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.chat-window').forEach(w => w.classList.remove('active'));
+        const targetTabBtn = document.querySelector(`.tab-btn[data-tab='${type}Chat']`);
+        const targetChatWindow = document.getElementById(`${type}Chat`);
+        if (targetTabBtn && targetChatWindow) {
+            targetTabBtn.classList.add('active');
+            targetChatWindow.classList.add('active');
+        }
+
+        const selectElement = document.getElementById(`${type}Select`);
+        selectElement.value = recipientId;
+    };
+
+    document.getElementById('addPatientForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        const isEditing = data.patientId && data.patientId !== "";
+        const endpoint = isEditing ? `/api/patients/${data.patientId}` : '/api/add_patient';
+        const method = isEditing ? 'PUT' : 'POST';
+
+        const payload = {
+            status: data.patientStatus,
+            lastCheckin: data.lastCheckin
+        };
+        if (!isEditing) {
+            payload.id = data.patientNameSelect;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(result.message);
+                hideModal('addPatientModal');
+                e.target.reset();
+                await loadAllData(); // Reload all data to show the updated lists
+            } else {
+                const error = await response.json();
+                alert('Error processing request: ' + error.error);
+            }
+        } catch (error) {
+            alert('Failed to connect to the server.');
+            console.error('Error:', error);
+        }
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.chat-window').forEach(w => w.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+    });
+
+    document.querySelectorAll('.patient-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.patient-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterPatients(btn.dataset.patientTab);
+        });
+    });
+
+    function filterPatients(filterType) {
+        const filtered = patients.filter(patient => {
+            if (filterType === 'all') return true;
+            return patient.status === filterType;
+        });
+        renderPatients(filtered);
+    }
+
+    // NEW: Separate function for Add Patient modal
+    window.showAddPatientModal = () => {
+        document.getElementById('modalTitle').textContent = 'Add a New Patient';
+        document.getElementById('patientNameSelect').style.display = 'block';
+        document.getElementById('patientId').value = '';
+        document.querySelector('#addPatientForm button[type="submit"]').textContent = 'Add Patient';
+        document.getElementById('addPatientForm').reset();
+        showModal('addPatientModal');
+    }
+
+    window.showModal = (modalId) => {
+        document.getElementById(modalId).style.display = 'flex';
+    }
+
+    window.hideModal = (modalId) => {
+        document.getElementById(modalId).style.display = 'none';
+        document.getElementById('addPatientForm').reset();
+        document.getElementById('patientNameSelect').style.display = 'block';
+    };
+
+    function getStatusClass(status) {
+        switch (status) {
+            case 'High-Risk':
+                return 'bg-red-200 text-red-800';
+            case 'Needs Follow-up':
+                return 'bg-yellow-200 text-yellow-800';
+            case 'Normal Pregnancy':
+            default:
+                return 'bg-green-200 text-green-800';
+        }
+    }
+
+    function renderAlertsAndReminders() {
+        const alertList = document.getElementById('alertList');
+        const reminderList = document.getElementById('reminderList');
+        alertList.innerHTML = '';
+        reminderList.innerHTML = '';
+        
+        const today = new Date();
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        patients.forEach(patient => {
+            // Check for high-risk patients
+            if (patient.status === 'High-Risk') {
+                const li = document.createElement('li');
+                li.textContent = `Patient ${patient.name} (ID: ${patient.id}) is marked as high-risk. Please review their status.`;
+                alertList.appendChild(li);
+            }
+
+            // Check for patients needing follow-up based on last check-in date
+            if (patient.last_checkin) {
+                const lastCheckinDate = new Date(patient.last_checkin);
+                const daysSinceCheckin = Math.round(Math.abs((today - lastCheckinDate) / oneDay));
+                if (daysSinceCheckin > 7) {
+                    const li = document.createElement('li');
+                    li.textContent = `Patient ${patient.name} (ID: ${patient.id}) last check-in was ${daysSinceCheckin} days ago. Needs follow-up.`;
+                    reminderList.appendChild(li);
+                }
+            }
+        });
+
+        // Add a reminder for all patients to simulate a general reminder
+        if (patients.length > 0) {
+            const li = document.createElement('li');
+            li.textContent = `Review all new patient profiles for completeness.`;
+            reminderList.appendChild(li);
+        }
+    }
+
+    // New function to fetch all users
+    async function loadUsers() {
+        try {
+            const response = await fetch('/api/users');
+            allUsers = await response.json();
+            renderUserSelection();
+        } catch (error) {
+            console.error('Error loading users:', error);
+            alert('Failed to load user data.');
+        }
+    }
+
+    async function loadPatients() {
+        try {
+            const response = await fetch('/api/patients');
+            patients = await response.json();
+            renderPatients();
+            renderAlertsAndReminders();
+            const activeTab = document.querySelector('.patient-tab-btn.active').dataset.patientTab;
+            filterPatients(activeTab);
+        } catch (error) {
+            console.error('Error loading patients:', error);
+            alert('Failed to load patient data.');
+        }
+    }
+
+    async function loadProviders() {
+        try {
+            const response = await fetch('/api/providers');
+            providers = await response.json();
+            renderProviders();
+        } catch (error) {
+            console.error('Error loading providers:', error);
+            alert('Failed to load provider data.');
+        }
+    }
+
+    async function loadAllData() {
+        await Promise.all([
+            loadPatients(),
+            loadProviders(),
+            loadUsers()
+        ]);
+    }
+
+    // Initial render on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        loadAllData();
+    });
+</script>
+</body>
+</html>

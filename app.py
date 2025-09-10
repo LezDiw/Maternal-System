@@ -91,15 +91,14 @@ def login():
         role = request.form['role_id']
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        # Look up role_id from role_name
         cursor.execute("SELECT id FROM roles WHERE role_name=%s", (role,))
         role_row = cursor.fetchone()
+
         if not role_row:
             flash("Invalid role", "error")
             return redirect(url_for('login_page'))
 
         role_id = role_row['id']
-
         cursor.execute(
             "SELECT * FROM users WHERE username=%s AND password_hash=%s AND role_id=%s",
             (username, password, role_id)
@@ -117,13 +116,17 @@ def login():
                 return redirect(url_for('patient_dashboard'))
             elif role == "Family of Expectant Mother":
                 return redirect(url_for('family_dashboard'))
-            elif  role== "Healthcare Provider":
+            elif role == "Healthcare Provider":
                 return redirect(url_for('healthcare_dashboard'))
             else:
-            #flash("Incorrect username, password, or role", "error")
-                return redirect(url_for('login-page'))
+                flash("Incorrect username, password, or role", "error")
+                return redirect(url_for('login_page'))
         else:
-            return render_template('Patient.html')       
+            flash("Incorrect username, password, or role", "error")
+            return render_template('Login.html')
+    
+    # This part handles the GET request for the login page
+    return render_template('Patient.html')
 
 # Registration route
 @app.route('/register', methods=['POST'])
