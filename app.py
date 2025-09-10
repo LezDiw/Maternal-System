@@ -431,6 +431,10 @@ def ai_chat():
 
     except Exception as e:
         return jsonify({"error": str(e), "response": "I am unable to generate a response at the moment."}), 500
+    
+with app.app_context():
+    db.create_all()
+    print("Database tables created!")
 
 if __name__ == '__main__':
     app.run(debug=True)
