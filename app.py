@@ -9,6 +9,7 @@ import os
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import urllib.parse
 
 load_dotenv("app.env")
 print("API Key Loaded:", os.getenv("OPENAI_API_KEY") is not None)
@@ -33,6 +34,7 @@ if 'JAWSDB_URL' in os.environ:
     # Production database from Heroku Add-on
     url = os.environ.get('JAWSDB_URL')
     # Use SQLAlchemy URI directly from the environment variable
+    url = url.replace("mysql://", "mysql+mysqlconnector://")
     app.config['SQLALCHEMY_DATABASE_URI'] = url
 else:
     # Local development database
