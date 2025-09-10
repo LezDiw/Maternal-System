@@ -25,8 +25,34 @@ firebase_config = {
     "measurementId": "G-EQYXFVCWHK"
   }
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://<Root>:<E_lizabeth03>@<127.0.0.1>/maternal_care_system'
+# Database Configuration
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+if 'CLEARDB_DATABASE_URL' in os.environ:
+    # Production database from Heroku Add-on
+    url = os.environ.get('CLEARDB_DATABASE_URL')
+    app.config['MYSQL_HOST'] = url.split('@')[1].split(':')[0]
+    app.config['MYSQL_USER'] = url.split(':')[1][2:]
+    app.config['MYSQL_PASSWORD'] = url.split(':')[2].split('@')[0]
+    app.config['MYSQL_DB'] = url.split('/')[3].split('?')[0]
+    # This is the crucial line: set SQLAlchemy URI from the environment variable
+    app.config['SQLALCHEMY_DATABASE_URI'] = url
+else:
+    # Local development database
+    app.config['MYSQL_HOST'] = 'localhost'
+    app.config['MYSQL_USER'] = 'root'
+    app.config['MYSQL_PASSWORD'] = 'E_lizabeth03'
+    app.config['MYSQL_DB'] = 'maternal_care_system'
+    # This is the crucial line: set SQLAlchemy URI with local credentials
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://{}:{}@{}/{}'.format(
+        app.config['MYSQL_USER'],
+        app.config['MYSQL_PASSWORD'],
+        app.config['MYSQL_HOST'],
+        app.config['MYSQL_DB']
+    )
+
+# Now, initialize both the MySQL and SQLAlchemy instances AFTER all configurations are set.
+mysql = MySQL(app)
 db = SQLAlchemy(app)
 
 class Message(db.Model):
@@ -37,33 +63,9 @@ class Message(db.Model):
     content = db.Column(db.Text, nullable=False) # Corrected to match table
     sent_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
 
-
 load_dotenv("app.env")
 print("API Key Loaded:", os.getenv("OPENAI_API_KEY") is not None)
 
-if 'CLEARDB_DATABASE_URL' in os.environ:
-    # Production database from Heroku Add-on
-    app.config['MYSQL_HOST'] = os.environ.get('CLEARDB_DATABASE_URL').split('@')[1].split(':')[0]
-    app.config['MYSQL_USER'] = os.environ.get('CLEARDB_DATABASE_URL').split(':')[1][2:]
-    app.config['MYSQL_PASSWORD'] = os.environ.get('CLEARDB_DATABASE_URL').split(':')[2].split('@')[0]
-    app.config['MYSQL_DB'] = os.environ.get('CLEARDB_DATABASE_URL').split('/')[3].split('?')[0]
-else:
-    # Local development database
-    app.config['MYSQL_HOST'] = 'localhost'
-    app.config['MYSQL_USER'] = 'root'
-    app.config['MYSQL_PASSWORD'] = 'E_lizabeth03'
-    app.config['MYSQL_DB'] = 'maternal_care_system'
-
-load_dotenv("app.env")
-print("API Key Loaded:", os.getenv("OPENAI_API_KEY") is not None)
-
-# MySQL configuration
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root' 
-app.config['MYSQL_PASSWORD'] = 'E_lizabeth03' 
-app.config['MYSQL_DB'] = 'maternal_care_system'
-
-mysql = MySQL(app)
 
 @app.route('/')
 def home_page():
