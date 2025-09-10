@@ -12,6 +12,9 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
+load_dotenv("app.env")
+print("API Key Loaded:", os.getenv("OPENAI_API_KEY") is not None)
+
 app = Flask(__name__)
 app.secret_key = 'yoursecretkey'
 
@@ -62,10 +65,6 @@ class Message(db.Model):
     receiver_id = db.Column(db.Integer)  # Corrected to match table
     content = db.Column(db.Text, nullable=False) # Corrected to match table
     sent_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
-
-load_dotenv("app.env")
-print("API Key Loaded:", os.getenv("OPENAI_API_KEY") is not None)
-
 
 @app.route('/')
 def home_page():
