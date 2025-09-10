@@ -29,9 +29,9 @@ firebase_config = {
 # Database Configuration
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-if 'CLEARDB_DATABASE_URL' in os.environ:
+if 'JAWSDB_URL' in os.environ:
     # Production database from Heroku Add-on
-    url = os.environ.get('CLEARDB_DATABASE_URL')
+    url = os.environ.get('JAWSDB_URL')
     # Use SQLAlchemy URI directly from the environment variable
     app.config['SQLALCHEMY_DATABASE_URI'] = url
 else:
