@@ -9,6 +9,7 @@ import os
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from flask_bcrypt import Bcrypt
 import urllib.parse
 
 load_dotenv("app.env")
@@ -16,6 +17,7 @@ print("API Key Loaded:", os.getenv("OPENAI_API_KEY") is not None)
 
 app = Flask(__name__)
 app.secret_key = 'yoursecretkey'
+bcrypt = Bcrypt(app)
 
 firebase_config = {
     "apiKey": "AIzaSyC3N9k_h5A8vrJJvJHSEnC-iynNMUHUkG4",
@@ -79,6 +81,7 @@ def contact_page():
 @app.route('/login-page')
 def login_page():
     return render_template('Login.html') 
+
 #login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -94,14 +97,14 @@ def login():
             flash("Invalid role", "error")
             return redirect(url_for('login_page'))
 
-        # Find the user by username, password, and role_id using SQLAlchemy
+        # Find the user by username and role_id using SQLAlchemy (DO NOT include password)
         user = User.query.filter_by(
             username=username, 
-            password_hash=password, 
             role_id=role.id
         ).first()
 
-        if user:
+        # Check if a user exists and if the password matches the stored hash
+        if user and bcrypt.check_password_hash(user.password_hash, password):
             session['loggedin'] = True
             session['id'] = user.id
             session['username'] = user.username
@@ -146,11 +149,14 @@ def register():
             flash("Invalid role selected", "error")
             return redirect(url_for('home_page'))
         
+        # HASH THE PASSWORD BEFORE STORING IT
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        
         # Create a new user instance and add to the database
         new_user = User(
             username=username, 
             email=email, 
-            password_hash=password, 
+            password_hash=hashed_password, # Use the hashed password here
             role_id=role.id
         )
         db.session.add(new_user)
