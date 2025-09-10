@@ -1,6 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from flask_mysqldb import MySQL
-import MySQLdb.cursors
 import re
 import requests
 from flask import jsonify 
@@ -34,28 +32,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 if 'CLEARDB_DATABASE_URL' in os.environ:
     # Production database from Heroku Add-on
     url = os.environ.get('CLEARDB_DATABASE_URL')
-    app.config['MYSQL_HOST'] = url.split('@')[1].split(':')[0]
-    app.config['MYSQL_USER'] = url.split(':')[1][2:]
-    app.config['MYSQL_PASSWORD'] = url.split(':')[2].split('@')[0]
-    app.config['MYSQL_DB'] = url.split('/')[3].split('?')[0]
-    # This is the crucial line: set SQLAlchemy URI from the environment variable
+    # Use SQLAlchemy URI directly from the environment variable
     app.config['SQLALCHEMY_DATABASE_URI'] = url
 else:
     # Local development database
-    app.config['MYSQL_HOST'] = 'localhost'
-    app.config['MYSQL_USER'] = 'root'
-    app.config['MYSQL_PASSWORD'] = 'E_lizabeth03'
-    app.config['MYSQL_DB'] = 'maternal_care_system'
-    # This is the crucial line: set SQLAlchemy URI with local credentials
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://{}:{}@{}/{}'.format(
-        app.config['MYSQL_USER'],
-        app.config['MYSQL_PASSWORD'],
-        app.config['MYSQL_HOST'],
-        app.config['MYSQL_DB']
-    )
-
-# Now, initialize both the MySQL and SQLAlchemy instances AFTER all configurations are set.
-mysql = MySQL(app)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:E_lizabeth03@localhost/maternal_care_system'
 db = SQLAlchemy(app)
 
 class Message(db.Model):
@@ -65,6 +46,21 @@ class Message(db.Model):
     receiver_id = db.Column(db.Integer)  # Corrected to match table
     content = db.Column(db.Text, nullable=False) # Corrected to match table
     sent_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    role_id = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(50))
+    last_checkin = db.Column(db.DateTime)
+
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    role_name = db.Column(db.String(50), unique=True, nullable=False)
 
 @app.route('/')
 def home_page():
@@ -81,94 +77,85 @@ def contact_page():
 @app.route('/login-page')
 def login_page():
     return render_template('Login.html') 
-
-# Login route
+#login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password_hash']
-        role = request.form['role_id']
+        role_name = request.form['role_id']
 
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT id FROM roles WHERE role_name=%s", (role,))
-        role_row = cursor.fetchone()
+        # Find the role by name using SQLAlchemy
+        role = Role.query.filter_by(role_name=role_name).first()
 
-        if not role_row:
+        if not role:
             flash("Invalid role", "error")
             return redirect(url_for('login_page'))
 
-        role_id = role_row['id']
-        cursor.execute(
-            "SELECT * FROM users WHERE username=%s AND password_hash=%s AND role_id=%s",
-            (username, password, role_id)
-        )
-        user = cursor.fetchone()
+        # Find the user by username, password, and role_id using SQLAlchemy
+        user = User.query.filter_by(
+            username=username, 
+            password_hash=password, 
+            role_id=role.id
+        ).first()
 
         if user:
             session['loggedin'] = True
-            session['id'] = user['id']
-            session['username'] = user['username']
-            session['role'] = user['role_id']
+            session['id'] = user.id
+            session['username'] = user.username
+            session['role'] = user.role_id
 
-            # Redirect based on role
-            if role == "Patient":
+            if role_name == "Patient":
                 return redirect(url_for('patient_dashboard'))
-            elif role == "Family of Expectant Mother":
+            elif role_name == "Family of Expectant Mother":
                 return redirect(url_for('family_dashboard'))
-            elif role == "Healthcare Provider":
+            elif role_name == "Healthcare Provider":
                 return redirect(url_for('healthcare_dashboard'))
-            else:
-                flash("Incorrect username, password, or role", "error")
-                return redirect(url_for('login_page'))
-        else:
-            flash("Incorrect username, password, or role", "error")
-            return render_template('Login.html')
+        
+        flash("Incorrect username, password, or role", "error")
+        return render_template('Login.html')
     
-    # This part handles the GET request for the login page
-    return render_template('Patient.html')
+    return render_template('Patient.html') 
 
-# Registration route
+#register route
 @app.route('/register', methods=['POST'])
 def register():
     username = request.form['username']
     email = request.form['email']
     password = request.form['password_hash']
-    role = request.form['role_id']
+    role_name = request.form['role_id']
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    # Check if username exists using SQLAlchemy
+    existing_user = User.query.filter_by(username=username).first()
 
-    # Check if username exists
-    cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
-    account = cursor.fetchone()
-
-    if account:
+    if existing_user:
         flash("Username already exists", "error")
         return redirect(url_for('home_page'))
     elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
         flash("Invalid email address", "error")
         return redirect(url_for('home_page'))
-    elif not username or not password or not email or not role:
+    elif not username or not password or not email or not role_name:
         flash("Please fill out the form completely", "error")
         return redirect(url_for('home_page'))
     else:
-        # Look up role_id from roles table
-        cursor.execute("SELECT id FROM roles WHERE role_name=%s", (role,))
-        role_row = cursor.fetchone()
-        if not role_row:
+        # Look up role_id from roles table using SQLAlchemy
+        role = Role.query.filter_by(role_name=role_name).first()
+        if not role:
             flash("Invalid role selected", "error")
             return redirect(url_for('home_page'))
-
-        role_id = role_row['id']
-
-        cursor.execute(
-            "INSERT INTO users (username, email, password_hash, role_id) VALUES (%s, %s, %s, %s)",
-            (username, email, password, role_id)
+        
+        # Create a new user instance and add to the database
+        new_user = User(
+            username=username, 
+            email=email, 
+            password_hash=password, 
+            role_id=role.id
         )
-        mysql.connection.commit()
+        db.session.add(new_user)
+        db.session.commit()
+        
         flash("You have successfully registered!", "success")
         return redirect(url_for('home_page'))
-
     
 @app.route('/api/chat/send', methods=['POST'])
 def send_message():
@@ -254,44 +241,82 @@ def logout():
 
 @app.route('/get_doctors')
 def get_doctors():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT id, username, email FROM users WHERE role_id = (SELECT id FROM roles WHERE role_name='Healthcare Provider')")
-    doctors = cursor.fetchall()
-    cursor.close()
+    # Query the database to get the ID for the 'Healthcare Provider' role
+    provider_role = Role.query.filter_by(role_name='Healthcare Provider').first()
+    
+    if not provider_role:
+        return jsonify({"error": "Healthcare Provider role not found"}), 404
+
+    # Use SQLAlchemy to find all users with that role ID
+    doctors = User.query.filter_by(role_id=provider_role.id).all()
 
     # Format doctors for the frontend
     doctor_list = [
-        {"id": doc["id"], "name": doc["username"], "specialization": "Healthcare Provider"}
+        {"id": doc.id, "name": doc.username, "specialization": "Healthcare Provider"}
         for doc in doctors
     ]
+    
     return jsonify(doctor_list)
 
 # New route to get all users from the database
 @app.route('/api/users', methods=['GET'])
 def get_all_users():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT id, username AS name, role_id FROM users")
-    users = cursor.fetchall()
-    cursor.close()
-    return jsonify(users)
+    # Use SQLAlchemy to get all users
+    users = User.query.with_entities(User.id, User.username, User.role_id).all()
+    
+    # Format the results into a list of dictionaries
+    users_list = [
+        {"id": user.id, "name": user.username, "role_id": user.role_id} 
+        for user in users
+    ]
+    
+    return jsonify(users_list)
 
 # Route to get all patients (role_id = 1)
 @app.route('/api/patients', methods=['GET'])
 def get_patients():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT id, username AS name, role_id, status, last_checkin FROM users WHERE role_id = 1")
-    patients = cursor.fetchall()
-    cursor.close()
-    return jsonify(patients)
+    # Use SQLAlchemy to find all users where role_id is 1 (Patient)
+    # The `with_entities` method is used for an efficient query
+    patients = User.query.with_entities(
+        User.id, 
+        User.username.label('name'), 
+        User.role_id, 
+        User.status, 
+        User.last_checkin
+    ).filter_by(role_id=1).all()
+
+    # Format the results into a list of dictionaries
+    patients_list = [
+        {
+            "id": patient.id,
+            "name": patient.name,
+            "role_id": patient.role_id,
+            "status": patient.status,
+            "last_checkin": patient.last_checkin
+        }
+        for patient in patients
+    ]
+
+    return jsonify(patients_list)
 
 # New route to get healthcare providers (role_id = 3)
 @app.route('/api/providers', methods=['GET'])
 def get_providers():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT id, username AS name, role_id FROM users WHERE role_id = 3")
-    providers = cursor.fetchall()
-    cursor.close()
-    return jsonify(providers)
+    # Use SQLAlchemy to find all users where role_id is 3 (Healthcare Provider)
+    # The with_entities method is used for an efficient query
+    providers = User.query.with_entities(
+        User.id, 
+        User.username.label('name'), 
+        User.role_id
+    ).filter_by(role_id=3).all()
+    
+    # Format the results into a list of dictionaries
+    providers_list = [
+        {"id": provider.id, "name": provider.name, "role_id": provider.role_id}
+        for provider in providers
+    ]
+    
+    return jsonify(providers_list)
 
 # New route to update a user's role to patient
 @app.route('/api/add_patient', methods=['POST'])
@@ -304,48 +329,76 @@ def add_patient():
     if not user_id:
         return jsonify({'error': 'User ID is required'}), 400
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Update the user's details
     try:
-        cursor.execute(
-            "UPDATE users SET role_id = 1, status = %s, last_checkin = %s WHERE id = %s",
-            (status, last_checkin, user_id)
-        )
-        mysql.connection.commit()
+        # Use SQLAlchemy to find the user by ID
+        user_to_update = User.query.get(user_id)
+
+        if not user_to_update:
+            return jsonify({'error': 'User not found'}), 404
+
+        # Update the user's details using object attributes
+        user_to_update.role_id = 1  # 1 is the ID for the 'Patient' role
+        user_to_update.status = status
+        user_to_update.last_checkin = last_checkin
+
+        # Commit the changes to the database
+        db.session.commit()
+
+        # Format the updated user data to return in the response
+        updated_user_data = {
+            "id": user_to_update.id,
+            "name": user_to_update.username,
+            "role_id": user_to_update.role_id,
+            "status": user_to_update.status,
+            "last_checkin": user_to_update.last_checkin
+        }
         
-        # Fetch the updated user to return in the response
-        cursor.execute("SELECT id, username AS name, role_id, status, last_checkin FROM users WHERE id = %s", (user_id,))
-        updated_user = cursor.fetchone()
-        cursor.close()
-        
-        return jsonify({'message': 'Patient details updated successfully', 'patient': updated_user}), 200
+        return jsonify({'message': 'Patient details updated successfully', 'patient': updated_user_data}), 200
+
     except Exception as e:
-        mysql.connection.rollback()
+        db.session.rollback()  # Roll back the session on error
         return jsonify({'error': str(e)}), 500
-    # New route to update an existing patient's details
 @app.route('/api/patients/<string:patient_id>', methods=['PUT'])
 def update_patient(patient_id):
     data = request.json
     status = data.get('status')
-    last_checkin = data.get('lastCheckin')
+    last_checkin_str = data.get('lastCheckin')  # Get the string value
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
     try:
-        cursor.execute(
-            "UPDATE users SET status = %s, last_checkin = %s WHERE id = %s",
-            (status, last_checkin, patient_id)
-        )
-        mysql.connection.commit()
+        # Check if the datetime string is provided
+        if last_checkin_str:
+            # Convert the string to a datetime object
+            # The format string must match how your frontend sends the date
+            # Example format: '2025-09-10T20:30:50'
+            last_checkin = datetime.fromisoformat(last_checkin_str.replace('Z', ''))
+        else:
+            last_checkin = None
+            
+        # Use SQLAlchemy to find the patient by ID
+        patient_to_update = User.query.get(patient_id)
+
+        if not patient_to_update:
+            return jsonify({'error': 'Patient not found'}), 404
+
+        # Update the patient's details
+        patient_to_update.status = status
+        patient_to_update.last_checkin = last_checkin
+
+        # Commit the changes to the database
+        db.session.commit()
         
-        cursor.execute("SELECT id, username AS name, status, last_checkin FROM users WHERE id = %s", (patient_id,))
-        updated_patient = cursor.fetchone()
-        cursor.close()
+        # Format the updated patient data to return in the response
+        updated_patient_data = {
+            "id": patient_to_update.id,
+            "name": patient_to_update.username,
+            "status": patient_to_update.status,
+            "last_checkin": patient_to_update.last_checkin.isoformat() if patient_to_update.last_checkin else None
+        }
         
-        return jsonify({'message': 'Patient details updated successfully', 'patient': updated_patient}), 200
+        return jsonify({'message': 'Patient details updated successfully', 'patient': updated_patient_data}), 200
+
     except Exception as e:
-        mysql.connection.rollback()
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
 # Set your API key (better:environment variable)
