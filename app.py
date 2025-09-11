@@ -18,6 +18,7 @@ print("API Key Loaded:", os.getenv("OPENAI_API_KEY") is not None)
 app = Flask(__name__)
 app.secret_key = 'yoursecretkey'
 bcrypt = Bcrypt(app)
+CORS(app)
 
 firebase_config = {
     "apiKey": "AIzaSyC3N9k_h5A8vrJJvJHSEnC-iynNMUHUkG4",
@@ -27,7 +28,7 @@ firebase_config = {
     "messagingSenderId": "199844547762",
     "appId": "1:199844547762:web:940f687ec11b3b5d8c0dab",
     "measurementId": "G-EQYXFVCWHK"
- }
+}
 
 # Database Configuration
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -41,14 +42,16 @@ if 'JAWSDB_URL' in os.environ:
 else:
     # Local development database
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:E_lizabeth03@localhost/maternal_care_system'
+
 db = SQLAlchemy(app)
 
+# Database Models
 class Message(db.Model):
     __tablename__ = 'messages'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     sender_id = db.Column(db.Integer, nullable=False)
-    receiver_id = db.Column(db.Integer)  # Corrected to match table
-    content = db.Column(db.Text, nullable=False) # Corrected to match table
+    receiver_id = db.Column(db.Integer)
+    content = db.Column(db.Text, nullable=False)
     sent_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
 
 class User(db.Model):
@@ -66,6 +69,7 @@ class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     role_name = db.Column(db.String(50), unique=True, nullable=False)
 
+# Basic Routes
 @app.route('/')
 def home_page():
     return render_template('M-C-S.html') 
@@ -82,92 +86,160 @@ def contact_page():
 def login_page():
     return render_template('Login.html') 
 
-#login route
+# FIXED LOGIN ROUTE
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password_hash']
-        role_name = request.form['role_id']
+        username = request.form.get('username')
+        password = request.form.get('password_hash')
+        role_name = request.form.get('role_id')
 
-        # Find the role by name using SQLAlchemy
+        # Validate input
+        if not username or not password or not role_name:
+            flash("Please fill out all fields", "error")
+            return render_template('Login.html')
+
+        # Find the role by name
         role = Role.query.filter_by(role_name=role_name).first()
-
         if not role:
-            flash("Invalid role", "error")
-            return redirect(url_for('login_page'))
+            flash("Invalid role selected", "error")
+            return render_template('Login.html')
 
-        # Find the user by username and role_id using SQLAlchemy
-        user = User.query.filter_by(
-            username=username, 
-            role_id=role.id
-        ).first()
+        # Find the user by username and role_id
+        user = User.query.filter_by(username=username, role_id=role.id).first()
 
-        # Check if a user exists and if the password matches the stored hash
+        # Verify user exists and password is correct
         if user and bcrypt.check_password_hash(user.password_hash, password):
+            # Set session variables
             session['loggedin'] = True
             session['id'] = user.id
             session['username'] = user.username
             session['role'] = user.role_id
+            session['role_name'] = role.role_name  # Store role name for easier access
 
-            # NEW: Redirect based on integer role ID
-            if role_name == "Patient":
+            # Redirect based on role name
+            if role.role_name == "Patient":
                 return redirect(url_for('patient_dashboard'))
-            elif role_name == "Family of Expectant Mother":
+            elif role.role_name == "Family of Expectant Mother":
                 return redirect(url_for('family_dashboard'))
-            elif role_name == "Healthcare Provider":
+            elif role.role_name == "Healthcare Provider":
                 return redirect(url_for('healthcare_dashboard'))
-        
-        # This code block will only be reached if the login fails
-        flash("Incorrect username, password, or role", "error")
-        return render_template('Login.html')
+            else:
+                flash("Unknown role", "error")
+                return render_template('Login.html')
+        else:
+            flash("Invalid username, password, or role combination", "error")
+            return render_template('Login.html')
 
-    # This handles the GET request, displaying the login page initially
+    # GET request - show login page
     return render_template('Login.html')
 
-#register route
+# REGISTER ROUTE
 @app.route('/register', methods=['POST'])
 def register():
-    username = request.form['username']
-    email = request.form['email']
-    password = request.form['password_hash']
-    role_name = request.form['role_id']
+    username = request.form.get('username')
+    email = request.form.get('email')
+    password = request.form.get('password_hash')
+    role_name = request.form.get('role_id')
 
-    # Check if username exists using SQLAlchemy
+    # Validate input
+    if not all([username, email, password, role_name]):
+        flash("Please fill out the form completely", "error")
+        return redirect(url_for('home_page'))
+
+    # Check if username already exists
     existing_user = User.query.filter_by(username=username).first()
-
     if existing_user:
         flash("Username already exists", "error")
         return redirect(url_for('home_page'))
-    elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+
+    # Validate email format
+    if not re.match(r'[^@]+@[^@]+\.[^@]+', email):
         flash("Invalid email address", "error")
         return redirect(url_for('home_page'))
-    elif not username or not password or not email or not role_name:
-        flash("Please fill out the form completely", "error")
+
+    # Check if email already exists
+    existing_email = User.query.filter_by(email=email).first()
+    if existing_email:
+        flash("Email already registered", "error")
         return redirect(url_for('home_page'))
-    else:
-        # Look up role_id from roles table using SQLAlchemy
-        role = Role.query.filter_by(role_name=role_name).first()
-        if not role:
-            flash("Invalid role selected", "error")
-            return redirect(url_for('home_page'))
-        
-        # HASH THE PASSWORD BEFORE STORING IT
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        
+
+    # Look up role_id from roles table
+    role = Role.query.filter_by(role_name=role_name).first()
+    if not role:
+        flash("Invalid role selected", "error")
+        return redirect(url_for('home_page'))
+    
+    # Hash the password before storing
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    
+    try:
         # Create a new user instance and add to the database
         new_user = User(
             username=username, 
             email=email, 
-            password_hash=hashed_password, # Use the hashed password here
+            password_hash=hashed_password,
             role_id=role.id
         )
         db.session.add(new_user)
         db.session.commit()
         
-        flash("You have successfully registered!", "success")
-        return redirect(url_for('home_page'))
+        flash("You have successfully registered! Please log in.", "success")
+        return redirect(url_for('login_page'))
     
+    except Exception as e:
+        db.session.rollback()
+        flash("Registration failed. Please try again.", "error")
+        return redirect(url_for('home_page'))
+
+# DASHBOARD ROUTES - SIMPLIFIED AND FIXED
+@app.route('/patient')
+def patient_dashboard():
+    if 'loggedin' not in session:
+        flash("Please log in to access the dashboard", "error")
+        return redirect(url_for('login_page'))
+    
+    # Check if user has the correct role
+    if session.get('role_name') != 'Patient':
+        flash("Access denied. Incorrect role.", "error")
+        return redirect(url_for('login_page'))
+    
+    return render_template('Patient.html')
+
+@app.route('/family')
+def family_dashboard():
+    if 'loggedin' not in session:
+        flash("Please log in to access the dashboard", "error")
+        return redirect(url_for('login_page'))
+    
+    # Check if user has the correct role
+    if session.get('role_name') != 'Family of Expectant Mother':
+        flash("Access denied. Incorrect role.", "error")
+        return redirect(url_for('login_page'))
+    
+    return render_template('FamilyFriend.html')
+
+@app.route('/healthcare')
+def healthcare_dashboard():
+    if 'loggedin' not in session:
+        flash("Please log in to access the dashboard", "error")
+        return redirect(url_for('login_page'))
+    
+    # Check if user has the correct role
+    if session.get('role_name') != 'Healthcare Provider':
+        flash("Access denied. Incorrect role.", "error")
+        return redirect(url_for('login_page'))
+    
+    return render_template('HealthCareProvider.html')
+
+# LOGOUT ROUTE
+@app.route('/logout')
+def logout():
+    session.clear()  # Clear all session data
+    flash("You have been logged out successfully", "info")
+    return redirect(url_for('home_page'))
+
+# MESSAGE API ROUTES
 @app.route('/api/chat/send', methods=['POST'])
 def send_message():
     data = request.json
@@ -175,38 +247,42 @@ def send_message():
     receiver_id_str = data.get('receiver_id')
     message_content = data.get('message')
 
-    # Ensure required fields are present
+    # Validate required fields
     if not all([sender_id_str, receiver_id_str, message_content]):
         return jsonify({"error": "Missing required fields"}), 400
 
-    # Convert sender and receiver IDs to integers
+    # Convert IDs to integers
     try:
         sender_id = int(sender_id_str)
         receiver_id = int(receiver_id_str)
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid sender_id or receiver_id format"}), 400
 
-    # Create a new message instance and add it to the database
-    new_message = Message(
-        sender_id=sender_id,
-        receiver_id=receiver_id,
-        content=message_content
-    )
-    db.session.add(new_message)
-    db.session.commit()
+    try:
+        # Create and save new message
+        new_message = Message(
+            sender_id=sender_id,
+            receiver_id=receiver_id,
+            content=message_content
+        )
+        db.session.add(new_message)
+        db.session.commit()
 
-    return jsonify({"status": "success", "message": "Message sent"}), 200
-# New API endpoint to get chat history
+        return jsonify({"status": "success", "message": "Message sent"}), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/chat/history/<user_id>/<recipient_id>', methods=['GET'])
 def get_chat_history(user_id, recipient_id):
-    # Convert IDs to integers
     try:
         user_id_int = int(user_id)
         recipient_id_int = int(recipient_id)
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid user ID or recipient ID"}), 400
 
-    # Query for messages where the user is either the sender or receiver
+    # Query for messages between the two users
     messages = Message.query.filter(
         db.or_(
             db.and_(Message.sender_id == user_id_int, Message.receiver_id == recipient_id_int),
@@ -214,7 +290,7 @@ def get_chat_history(user_id, recipient_id):
         )
     ).order_by(Message.sent_at.asc()).all()
 
-    # Format the data for the front-end
+    # Format messages for frontend
     messages_list = [{
         "sender_id": m.sender_id,
         "receiver_id": m.receiver_id,
@@ -224,88 +300,16 @@ def get_chat_history(user_id, recipient_id):
 
     return jsonify(messages_list)
 
-
-# Dashboards
-@app.route('/patient')
-def patient_dashboard():
-    # NEW: Get the role from the database to avoid hardcoded IDs
-    user_role = None
-    if 'role' in session:
-        user_role = Role.query.get(session['role'])
-
-    if 'loggedin' in session and user_role and user_role.role_name == 'Patient':
-        # This is the crucial check for Heroku. It ensures the app serves over HTTPS.
-        if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
-            return render_template('Patient.html')
-        else:
-            # If not on HTTPS, redirect to the secure version to avoid issues
-            url = url_for('patient_dashboard', _external=True, _scheme='https')
-            return redirect(url)
-    else:
-        # If not logged in or role is wrong, redirect to the login page
-        return redirect(url_for('login-page'))
-
-@app.route('/family')
-def family_dashboard():
-    # NEW: Get the role from the database to avoid hardcoded IDs
-    user_role = None
-    if 'role' in session:
-        user_role = Role.query.get(session['role'])
-        
-    if 'loggedin' in session and user_role and user_role.role_name == 'Family of Expectant Mother':
-        # Check for the correct protocol on Heroku
-        if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
-            return render_template('FamilyFriend.html')
-        else:
-            # Redirect to the secure version
-            url = url_for('family_dashboard', _external=True, _scheme='https')
-            return redirect(url)
-    else:
-        # If not logged in or role is wrong, redirect to the login page
-        return redirect(url_for('login-page'))
-
-@app.route('/healthcare')
-def healthcare_dashboard():
-    # NEW: Get the role from the database to avoid hardcoded IDs
-    user_role = None
-    if 'role' in session:
-        user_role = Role.query.get(session['role'])
-    
-    if 'loggedin' in session and user_role and user_role.role_name == 'Healthcare Provider':
-        # Check for the correct protocol on Heroku
-        if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
-            return render_template('HealthCareProvider.html')
-        else:
-            # Redirect to the secure version
-            url = url_for('healthcare_dashboard', _external=True, _scheme='https')
-            return redirect(url)
-    else:
-        # If not logged in or role is wrong, redirect to the login page
-        return redirect(url_for('login-page'))
-
-
-# Logout
-@app.route('/logout')
-def logout():
-    session.pop('loggedin', None)
-    session.pop('id', None)
-    session.pop('username', None)
-    session.pop('role_id', None)
-    flash("You have been logged out", "info")
-    return redirect(url_for('home_page'))
-
+# USER API ROUTES
 @app.route('/get_doctors')
 def get_doctors():
-    # Query the database to get the ID for the 'Healthcare Provider' role
     provider_role = Role.query.filter_by(role_name='Healthcare Provider').first()
     
     if not provider_role:
         return jsonify({"error": "Healthcare Provider role not found"}), 404
 
-    # Use SQLAlchemy to find all users with that role ID
     doctors = User.query.filter_by(role_id=provider_role.id).all()
 
-    # Format doctors for the frontend
     doctor_list = [
         {"id": doc.id, "name": doc.username, "specialization": "Healthcare Provider"}
         for doc in doctors
@@ -313,13 +317,10 @@ def get_doctors():
     
     return jsonify(doctor_list)
 
-# New route to get all users from the database
 @app.route('/api/users', methods=['GET'])
 def get_all_users():
-    # Use SQLAlchemy to get all users
     users = User.query.with_entities(User.id, User.username, User.role_id).all()
     
-    # Format the results into a list of dictionaries
     users_list = [
         {"id": user.id, "name": user.username, "role_id": user.role_id} 
         for user in users
@@ -327,11 +328,8 @@ def get_all_users():
     
     return jsonify(users_list)
 
-# Route to get all patients (role_id = 1)
 @app.route('/api/patients', methods=['GET'])
 def get_patients():
-    # Use SQLAlchemy to find all users where role_id is 1 (Patient)
-    # The `with_entities` method is used for an efficient query
     patients = User.query.with_entities(
         User.id, 
         User.username.label('name'), 
@@ -340,32 +338,27 @@ def get_patients():
         User.last_checkin
     ).filter_by(role_id=1).all()
 
-    # Format the results into a list of dictionaries
     patients_list = [
         {
             "id": patient.id,
             "name": patient.name,
             "role_id": patient.role_id,
             "status": patient.status,
-            "last_checkin": patient.last_checkin
+            "last_checkin": patient.last_checkin.isoformat() if patient.last_checkin else None
         }
         for patient in patients
     ]
 
     return jsonify(patients_list)
 
-# New route to get healthcare providers (role_id = 3)
 @app.route('/api/providers', methods=['GET'])
 def get_providers():
-    # Use SQLAlchemy to find all users where role_id is 3 (Healthcare Provider)
-    # The with_entities method is used for an efficient query
     providers = User.query.with_entities(
         User.id, 
         User.username.label('name'), 
         User.role_id
     ).filter_by(role_id=3).all()
     
-    # Format the results into a list of dictionaries
     providers_list = [
         {"id": provider.id, "name": provider.name, "role_id": provider.role_id}
         for provider in providers
@@ -373,7 +366,6 @@ def get_providers():
     
     return jsonify(providers_list)
 
-# New route to update a user's role to patient
 @app.route('/api/add_patient', methods=['POST'])
 def add_patient():
     data = request.json
@@ -385,64 +377,56 @@ def add_patient():
         return jsonify({'error': 'User ID is required'}), 400
 
     try:
-        # Use SQLAlchemy to find the user by ID
         user_to_update = User.query.get(user_id)
 
         if not user_to_update:
             return jsonify({'error': 'User not found'}), 404
 
-        # Update the user's details using object attributes
-        user_to_update.role_id = 1  # 1 is the ID for the 'Patient' role
+        # Update user details
+        user_to_update.role_id = 1  # Patient role ID
         user_to_update.status = status
-        user_to_update.last_checkin = last_checkin
+        if last_checkin:
+            user_to_update.last_checkin = datetime.fromisoformat(last_checkin.replace('Z', ''))
 
-        # Commit the changes to the database
         db.session.commit()
 
-        # Format the updated user data to return in the response
         updated_user_data = {
             "id": user_to_update.id,
             "name": user_to_update.username,
             "role_id": user_to_update.role_id,
             "status": user_to_update.status,
-            "last_checkin": user_to_update.last_checkin
+            "last_checkin": user_to_update.last_checkin.isoformat() if user_to_update.last_checkin else None
         }
         
         return jsonify({'message': 'Patient details updated successfully', 'patient': updated_user_data}), 200
 
     except Exception as e:
-        db.session.rollback()  # Roll back the session on error
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
 @app.route('/api/patients/<string:patient_id>', methods=['PUT'])
 def update_patient(patient_id):
     data = request.json
     status = data.get('status')
-    last_checkin_str = data.get('lastCheckin')  # Get the string value
+    last_checkin_str = data.get('lastCheckin')
 
     try:
-        # Check if the datetime string is provided
+        # Parse datetime if provided
+        last_checkin = None
         if last_checkin_str:
-            # Convert the string to a datetime object
-            # The format string must match how your frontend sends the date
-            # Example format: '2025-09-10T20:30:50'
             last_checkin = datetime.fromisoformat(last_checkin_str.replace('Z', ''))
-        else:
-            last_checkin = None
             
-        # Use SQLAlchemy to find the patient by ID
         patient_to_update = User.query.get(patient_id)
 
         if not patient_to_update:
             return jsonify({'error': 'Patient not found'}), 404
 
-        # Update the patient's details
+        # Update patient details
         patient_to_update.status = status
         patient_to_update.last_checkin = last_checkin
 
-        # Commit the changes to the database
         db.session.commit()
         
-        # Format the updated patient data to return in the response
         updated_patient_data = {
             "id": patient_to_update.id,
             "name": patient_to_update.username,
@@ -456,7 +440,7 @@ def update_patient(patient_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-# Set your API key (better:environment variable)
+# AI CHAT ROUTE
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route("/api/chat/ai", methods=["POST"])
@@ -464,13 +448,12 @@ def ai_chat():
     data = request.get_json()
     user_message = data.get("message", "")
 
-    # Error handling: block empty messages
     if not user_message.strip():
         return jsonify({"response": "Please enter a question."}), 400
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # good for chatbots
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a maternal healthcare assistant. Provide accurate, structured, and safe health guidance in simple language."},
                 {"role": "user", "content": user_message}
@@ -484,10 +467,30 @@ def ai_chat():
 
     except Exception as e:
         return jsonify({"error": str(e), "response": "I am unable to generate a response at the moment."}), 500
-    
-with app.app_context():
-    db.create_all()
-    print("Database tables created!")
 
+# Initialize database and run app
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+        print("Database tables created!")
+        
+        # Create default roles if they don't exist
+        roles = [
+            "Patient",
+            "Family of Expectant Mother", 
+            "Healthcare Provider"
+        ]
+        
+        for role_name in roles:
+            if not Role.query.filter_by(role_name=role_name).first():
+                new_role = Role(role_name=role_name)
+                db.session.add(new_role)
+        
+        try:
+            db.session.commit()
+            print("Default roles created!")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error creating roles: {e}")
+    
     app.run(debug=True)
