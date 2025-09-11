@@ -156,7 +156,8 @@ def login():
             session['role'] = user.role_id
             session['role_name'] = role.role_name
 
-            print(f"✅ Session created - User ID: {session['id']}, Role: {session['role_name']}")
+            # --- DEBUGGING PRINT STATEMENT ADDED HERE ---
+            print(f"✅ Session created - User ID: {session['id']}, Role: {session['role_name']}, Stored Role ID: {session['role']}")
 
             # Redirect based on role name
             if role.role_name == "Patient":
@@ -242,6 +243,9 @@ def register():
 # DASHBOARD ROUTES - SIMPLIFIED AND FIXED
 @app.route('/patient')
 def patient_dashboard():
+    # --- DEBUGGING PRINT STATEMENT ADDED HERE ---
+    print(f"➡️ Entering patient dashboard. Session role: {session.get('role')}, Session loggedin: {session.get('loggedin')}")
+
     # Check if user is logged in
     if 'loggedin' not in session:
         flash("Please log in to access the dashboard", "error")
@@ -257,6 +261,9 @@ def patient_dashboard():
 
 @app.route('/family')
 def family_dashboard():
+    # --- DEBUGGING PRINT STATEMENT ADDED HERE ---
+    print(f"➡️ Entering family dashboard. Session role: {session.get('role')}, Session loggedin: {session.get('loggedin')}")
+
     # Check if user is logged in
     if 'loggedin' not in session:
         flash("Please log in to access the dashboard", "error")
@@ -272,6 +279,9 @@ def family_dashboard():
 
 @app.route('/healthcare')
 def healthcare_dashboard():
+    # --- DEBUGGING PRINT STATEMENT ADDED HERE ---
+    print(f"➡️ Entering healthcare dashboard. Session role: {session.get('role')}, Session loggedin: {session.get('loggedin')}")
+
     # Check if user is logged in
     if 'loggedin' not in session:
         flash("Please log in to access the dashboard", "error")
