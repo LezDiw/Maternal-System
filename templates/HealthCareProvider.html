@@ -33,7 +33,7 @@
         border-bottom-right-radius: 12px;
     }
     .dashboard {
-        display: flex;
+        display: none; /* Initially hidden until authenticated */
         flex-wrap: wrap;
         padding: 2rem;
         gap: 2rem;
@@ -267,14 +267,55 @@
         padding: 1rem;
         color: #475569;
     }
+
+    /* Login Screen styles */
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f1f5f9;
+        flex-direction: column;
+    }
+    .login-box {
+        background: white;
+        padding: 3rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+    }
+    .login-button {
+        background-color: #3b82f6;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    .login-button:hover {
+        background-color: #2563eb;
+    }
 </style>
 </head>
 <body>
-<header>
+
+<!-- Login Screen -->
+<div id="login-screen" class="login-container">
+    <div class="login-box">
+        <h2 class="text-2xl font-bold mb-4">Welcome, Healthcare Provider</h2>
+        <p class="text-gray-600 mb-6">Please log in to access your dashboard.</p>
+        <button id="login-button" class="login-button">Log In</button>
+        <p id="auth-status" class="mt-4 text-sm text-gray-500"></p>
+    </div>
+</div>
+
+<header id="dashboard-header" class="hidden">
     <h1>Maternal Care System - Healthcare Provider Dashboard</h1>
 </header>
 
-<main class="dashboard">
+<main id="dashboard-main" class="dashboard">
     <section class="content-section">
         <div class="flex justify-between items-center mb-4">
             <h2>My Patients</h2>
@@ -435,11 +476,12 @@
     </div>
 </div>
 
-
 <script>
     let patients = [];
     let providers = [];
     let allUsers = [];
+    let userId = null;
+    let authToken = null;
 
     // --- Utility Functions for Modals and Messages ---
     const showModal = (modalId) => {
@@ -468,6 +510,23 @@
         }
         showModal('messageModal');
     };
+
+    // --- Authentication Logic ---
+    document.getElementById('login-button').addEventListener('click', () => {
+        // In a real app, this would be a fetch call to a login endpoint.
+        // The server would validate credentials and return a user ID and token.
+        console.log('Simulating login...');
+        
+        // Simulating the server response
+        userId = Math.floor(Math.random() * 1000000); // A random, unique user ID
+        authToken = `fake-jwt-token-${userId}-${Date.now()}`; // A fake, unique token
+
+        document.getElementById('auth-status').textContent = `Login successful! Your User ID is ${userId}`;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard-header').style.display = 'block';
+        document.getElementById('dashboard-main').style.display = 'flex';
+        loadAllData();
+    });
 
     // --- Dynamic UI Population Functions ---
     const renderPatients = (filteredPatients = patients) => {
@@ -535,10 +594,15 @@
         input.value = '';
 
         const messagesDiv = document.getElementById(`${type}Messages`);
-        let senderId = 'provider_1';
         let recipientId;
         let endpoint = '';
         let payload = {};
+
+        // Check if the user is authenticated
+        if (!userId || !authToken) {
+            showMessageModal('Authentication error. Please log in again.', false);
+            return;
+        }
 
         if (type === 'ai') {
             endpoint = '/api/chat/ai'; 
@@ -583,17 +647,19 @@
             }
 
             endpoint = '/api/chat/send';
-            payload = { sender_id: parseInt(senderId, 10), receiver_id: parseInt(recipientId, 10), message: message };
+            payload = { sender_id: userId, receiver_id: parseInt(recipientId, 10), message: message };
 
             try {
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}` // The key part of token-based authentication
+                    },
                     body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    // Assuming pollChat function refreshes the chat window
                     await pollChat(recipientId, type); 
                 } else {
                     const error = await response.json();
@@ -623,14 +689,11 @@
         const patient = patients.find(p => p.id === patientId);
         if (!patient) return;
         
-        // Set the modal title and form button text for editing
         document.getElementById('modalTitle').textContent = `Edit Patient: ${patient.name}`;
         document.querySelector('#addPatientForm button[type="submit"]').textContent = 'Update Patient';
 
-        // Hide the user dropdown for editing
         document.getElementById('patientNameSelectDiv').style.display = 'none'; 
 
-        // Populate the form with patient data
         document.getElementById('patientId').value = patient.id;
         document.getElementById('patientName').value = patient.name;
         document.getElementById('patientStatus').value = patient.status;
@@ -668,7 +731,7 @@
         };
         
         if (!isEditing) {
-            payload.id = data.patientNameSelect;
+            payload.id = parseInt(data.patientNameSelect);
             const selectedUser = allUsers.find(u => u.id === parseInt(data.patientNameSelect));
             if (selectedUser) {
                 payload.name = selectedUser.name;
@@ -682,6 +745,7 @@
                 method: method,
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}` // Add authorization for patient data
                 },
                 body: JSON.stringify(payload),
             });
@@ -786,7 +850,6 @@
         }
     }
 
-    // New function to fetch all users
     async function loadUsers() {
         try {
             const response = await fetch('/api/users');
@@ -800,7 +863,11 @@
 
     async function loadPatients() {
         try {
-            const response = await fetch('/api/patients');
+            const response = await fetch('/api/patients', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
             patients = await response.json();
             renderPatients();
             renderAlertsAndReminders();
@@ -808,18 +875,22 @@
             filterPatients(activeTab);
         } catch (error) {
             console.error('Error loading patients:', error);
-            showMessageModal('Failed to load patient data.', false);
+            showMessageModal('Failed to load patient data. Your session may have expired.', false);
         }
     }
 
     async function loadProviders() {
         try {
-            const response = await fetch('/api/providers');
+            const response = await fetch('/api/providers', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
             providers = await response.json();
             renderProviders();
         } catch (error) {
             console.error('Error loading providers:', error);
-            showMessageModal('Failed to load provider data.', false);
+            showMessageModal('Failed to load provider data. Your session may have expired.', false);
         }
     }
 
@@ -836,10 +907,6 @@
         ]);
     }
 
-    // Initial render on page load
-    window.addEventListener('DOMContentLoaded', () => {
-        loadAllData();
-    });
 </script>
 </body>
 </html>
