@@ -97,7 +97,7 @@ def login():
             flash("Invalid role", "error")
             return redirect(url_for('login_page'))
 
-        # Find the user by username and role_id using SQLAlchemy (DO NOT include password)
+        # Find the user by username and role_id using SQLAlchemy
         user = User.query.filter_by(
             username=username, 
             role_id=role.id
@@ -117,10 +117,12 @@ def login():
             elif role_name == "Healthcare Provider":
                 return redirect(url_for('healthcare_dashboard'))
         
+        # This code block will only be reached if the login fails
         flash("Incorrect username, password, or role", "error")
         return render_template('Login.html')
-    
-    return render_template('Patient.html') 
+
+    # This handles the GET request, displaying the login page initially
+    return render_template('Login.html')
 
 #register route
 @app.route('/register', methods=['POST'])
