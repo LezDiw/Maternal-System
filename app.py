@@ -242,12 +242,14 @@ def register():
 # DASHBOARD ROUTES - SIMPLIFIED AND FIXED
 @app.route('/patient')
 def patient_dashboard():
+    # Check if user is logged in
     if 'loggedin' not in session:
         flash("Please log in to access the dashboard", "error")
         return redirect(url_for('login_page'))
     
-    # Check if user has the correct role
-    if session.get('role_name') != 'Patient':
+    # Use the role_id to check the user's role
+    patient_role_id = Role.query.filter_by(role_name='Patient').first().id
+    if session.get('role') != patient_role_id:
         flash("Access denied. Incorrect role.", "error")
         return redirect(url_for('login_page'))
     
@@ -255,12 +257,14 @@ def patient_dashboard():
 
 @app.route('/family')
 def family_dashboard():
+    # Check if user is logged in
     if 'loggedin' not in session:
         flash("Please log in to access the dashboard", "error")
         return redirect(url_for('login_page'))
     
-    # Check if user has the correct role
-    if session.get('role_name') != 'Family of Expectant Mother':
+    # Use the role_id to check the user's role
+    family_role_id = Role.query.filter_by(role_name='Family of Expectant Mother').first().id
+    if session.get('role') != family_role_id:
         flash("Access denied. Incorrect role.", "error")
         return redirect(url_for('login_page'))
     
@@ -268,12 +272,14 @@ def family_dashboard():
 
 @app.route('/healthcare')
 def healthcare_dashboard():
+    # Check if user is logged in
     if 'loggedin' not in session:
         flash("Please log in to access the dashboard", "error")
         return redirect(url_for('login_page'))
     
-    # Check if user has the correct role
-    if session.get('role_name') != 'Healthcare Provider':
+    # Use the role_id to check the user's role
+    provider_role_id = Role.query.filter_by(role_name='Healthcare Provider').first().id
+    if session.get('role') != provider_role_id:
         flash("Access denied. Incorrect role.", "error")
         return redirect(url_for('login_page'))
     
@@ -282,7 +288,7 @@ def healthcare_dashboard():
 # LOGOUT ROUTE
 @app.route('/logout')
 def logout():
-    session.clear()  # Clear all session data
+    session.clear() 
     flash("You have been logged out successfully", "info")
     return redirect(url_for('home_page'))
 
@@ -430,7 +436,7 @@ def add_patient():
             return jsonify({'error': 'User not found'}), 404
 
         # Update user details
-        user_to_update.role_id = 1  # Patient role ID
+        user_to_update.role_id = 1 
         user_to_update.status = status
         if last_checkin:
             user_to_update.last_checkin = datetime.fromisoformat(last_checkin.replace('Z', ''))
