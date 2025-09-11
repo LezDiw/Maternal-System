@@ -27,7 +27,7 @@ firebase_config = {
     "messagingSenderId": "199844547762",
     "appId": "1:199844547762:web:940f687ec11b3b5d8c0dab",
     "measurementId": "G-EQYXFVCWHK"
-  }
+ }
 
 # Database Configuration
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -110,6 +110,7 @@ def login():
             session['username'] = user.username
             session['role'] = user.role_id
 
+            # NEW: Redirect based on integer role ID
             if role_name == "Patient":
                 return redirect(url_for('patient_dashboard'))
             elif role_name == "Family of Expectant Mother":
@@ -227,8 +228,8 @@ def get_chat_history(user_id, recipient_id):
 # Dashboards
 @app.route('/patient')
 def patient_dashboard():
-    # Check if the user is logged in and their role is 'patient'
-    if 'loggedin' in session and session.get('role') == 'Patient':
+    # Corrected: Check against the integer role_id for a patient (assuming 1)
+    if 'loggedin' in session and session.get('role') == 1:
         # This is the crucial check for Heroku. It ensures the app serves over HTTPS.
         if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
             return render_template('Patient.html')
@@ -242,8 +243,8 @@ def patient_dashboard():
 
 @app.route('/family')
 def family_dashboard():
-    # Check if the user is logged in and their role is 'family'
-    if 'loggedin' in session and session.get('role') == 'Family of Expectant Mother':
+    # Corrected: Check against the integer role_id for a family member (assuming 2)
+    if 'loggedin' in session and session.get('role') == 2:
         # Check for the correct protocol on Heroku
         if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
             return render_template('FamilyFriend.html')
@@ -257,8 +258,8 @@ def family_dashboard():
 
 @app.route('/healthcare')
 def healthcare_dashboard():
-    # Check if the user is logged in and their role is 'healthcare'
-    if 'loggedin' in session and session.get('role') == 'Healthcare Provider':
+    # Corrected: Check against the integer role_id for a healthcare provider (assuming 3)
+    if 'loggedin' in session and session.get('role') == 3:
         # Check for the correct protocol on Heroku
         if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
             return render_template('HealthCareProvider.html')
@@ -457,7 +458,7 @@ def ai_chat():
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",   # good for chatbots
+            model="gpt-4o-mini",  # good for chatbots
             messages=[
                 {"role": "system", "content": "You are a maternal healthcare assistant. Provide accurate, structured, and safe health guidance in simple language."},
                 {"role": "user", "content": user_message}
