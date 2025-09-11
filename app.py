@@ -227,17 +227,49 @@ def get_chat_history(user_id, recipient_id):
 # Dashboards
 @app.route('/patient')
 def patient_dashboard():
-    if 'loggedin' in session:
-       # return render_template('Patient.html' , firebase_config=json.dumps(firebase_config))
-        return redirect(url_for('login'))
+    # Check if the user is logged in and their role is 'patient'
+    if 'loggedin' in session and session.get('role') == 'Patient':
+        # This is the crucial check for Heroku. It ensures the app serves over HTTPS.
+        if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
+            return render_template('Patient.html')
+        else:
+            # If not on HTTPS, redirect to the secure version to avoid issues
+            url = url_for('patient_dashboard', _external=True, _scheme='https')
+            return redirect(url)
+    else:
+        # If not logged in or role is wrong, redirect to the login page
+        return redirect(url_for('login-page'))
 
 @app.route('/family')
 def family_dashboard():
-    return render_template('FamilyFriend.html')
+    # Check if the user is logged in and their role is 'family'
+    if 'loggedin' in session and session.get('role') == 'Family of Expectant Mother':
+        # Check for the correct protocol on Heroku
+        if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
+            return render_template('FamilyFriend.html')
+        else:
+            # Redirect to the secure version
+            url = url_for('family_dashboard', _external=True, _scheme='https')
+            return redirect(url)
+    else:
+        # If not logged in or role is wrong, redirect to the login page
+        return redirect(url_for('login-page'))
 
 @app.route('/healthcare')
 def healthcare_dashboard():
-    return render_template('HealthCareProvider.html')
+    # Check if the user is logged in and their role is 'healthcare'
+    if 'loggedin' in session and session.get('role') == 'Healthcare Provider':
+        # Check for the correct protocol on Heroku
+        if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
+            return render_template('HealthCareProvider.html')
+        else:
+            # Redirect to the secure version
+            url = url_for('healthcare_dashboard', _external=True, _scheme='https')
+            return redirect(url)
+    else:
+        # If not logged in or role is wrong, redirect to the login page
+        return redirect(url_for('login-page'))
+
 
 # Logout
 @app.route('/logout')
