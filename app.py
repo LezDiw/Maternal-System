@@ -119,35 +119,35 @@ def login():
         password = request.form.get('password_hash')
         role_name = request.form.get('role_id')
 
-        print(f"🔍 Login attempt - Username: {username}, Role: {role_name}")
+        print(f"Login attempt - Username: {username}, Role: {role_name}")
 
         # Validate input
         if not username or not password or not role_name:
-            print("❌ Missing required fields")
+            print("Missing required fields")
             flash("Please fill out all fields", "error")
             return render_template('Login.html')
 
         # Find the role by name
         role = Role.query.filter_by(role_name=role_name).first()
         if not role:
-            print(f"❌ Role not found: {role_name}")
+            print(f"Role not found: {role_name}")
             flash("Invalid role selected", "error")
             return render_template('Login.html')
 
-        print(f"✅ Found role - ID: {role.id}, Name: {role.role_name}")
+        print(f"Found role - ID: {role.id}, Name: {role.role_name}")
 
         # Find the user by username and role_id
         user = User.query.filter_by(username=username, role_id=role.id).first()
         if not user:
-            print(f"❌ User not found with username '{username}' and role_id {role.id}")
+            print(f"User not found with username '{username}' and role_id {role.id}")
             flash("Invalid username or role combination", "error")
             return render_template('Login.html')
 
-        print(f"✅ Found user - ID: {user.id}, Username: {user.username}")
+        print(f"Found user - ID: {user.id}, Username: {user.username}")
 
         # Verify password
         if bcrypt.check_password_hash(user.password_hash, password):
-            print("✅ Password verification successful")
+            print("Password verification successful")
 
             # Set session variables
             session['loggedin'] = True
@@ -157,29 +157,29 @@ def login():
             session['role_name'] = role.role_name
 
             # --- DEBUGGING PRINT STATEMENT ADDED HERE ---
-            print(f"✅ Session created - User ID: {session['id']}, Role: {session['role_name']}, Stored Role ID: {session['role']}")
+            print(f"Session created - User ID: {session['id']}, Role: {session['role_name']}, Stored Role ID: {session['role']}")
 
             # Redirect based on role name
             if role.role_name == "Patient":
-                print("🏥 Redirecting to patient dashboard")
+                print("Redirecting to patient dashboard")
                 return redirect(url_for('patient_dashboard'))
             elif role.role_name == "Family of Expectant Mother":
-                print("👨‍👩‍👧‍👦 Redirecting to family dashboard")
+                print("Redirecting to family dashboard")
                 return redirect(url_for('family_dashboard'))
             elif role.role_name == "Healthcare Provider":
-                print("👩‍⚕️ Redirecting to healthcare dashboard")
+                print("Redirecting to healthcare dashboard")
                 return redirect(url_for('healthcare_dashboard'))
             else:
-                print(f"❌ Unknown role: {role.role_name}")
+                print(f"Unknown role: {role.role_name}")
                 flash("Unknown role", "error")
                 return render_template('Login.html')
         else:
-            print("❌ Password verification failed")
+            print("Password verification failed")
             flash("Invalid password", "error")
             return render_template('Login.html')
 
     # GET request - show login page
-    print("📄 Displaying login page")
+    print("Displaying login page")
     return render_template('Login.html')
 
 # REGISTER ROUTE
@@ -244,7 +244,7 @@ def register():
 @app.route('/patient')
 def patient_dashboard():
     # --- DEBUGGING PRINT STATEMENT ADDED HERE ---
-    print(f"➡️ Entering patient dashboard. Session role: {session.get('role')}, Session loggedin: {session.get('loggedin')}")
+    print(f"Entering patient dashboard. Session role: {session.get('role')}, Session loggedin: {session.get('loggedin')}")
 
     # Check if user is logged in
     if 'loggedin' not in session:
@@ -262,7 +262,7 @@ def patient_dashboard():
 @app.route('/family')
 def family_dashboard():
     # --- DEBUGGING PRINT STATEMENT ADDED HERE ---
-    print(f"➡️ Entering family dashboard. Session role: {session.get('role')}, Session loggedin: {session.get('loggedin')}")
+    print(f"Entering family dashboard. Session role: {session.get('role')}, Session loggedin: {session.get('loggedin')}")
 
     # Check if user is logged in
     if 'loggedin' not in session:
@@ -280,7 +280,7 @@ def family_dashboard():
 @app.route('/healthcare')
 def healthcare_dashboard():
     # --- DEBUGGING PRINT STATEMENT ADDED HERE ---
-    print(f"➡️ Entering healthcare dashboard. Session role: {session.get('role')}, Session loggedin: {session.get('loggedin')}")
+    print(f" Entering healthcare dashboard. Session role: {session.get('role')}, Session loggedin: {session.get('loggedin')}")
 
     # Check if user is logged in
     if 'loggedin' not in session:
