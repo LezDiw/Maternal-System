@@ -228,8 +228,12 @@ def get_chat_history(user_id, recipient_id):
 # Dashboards
 @app.route('/patient')
 def patient_dashboard():
-    # Corrected: Check against the integer role_id for a patient (assuming 1)
-    if 'loggedin' in session and session.get('role') == 1:
+    # NEW: Get the role from the database to avoid hardcoded IDs
+    user_role = None
+    if 'role' in session:
+        user_role = Role.query.get(session['role'])
+
+    if 'loggedin' in session and user_role and user_role.role_name == 'Patient':
         # This is the crucial check for Heroku. It ensures the app serves over HTTPS.
         if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
             return render_template('Patient.html')
@@ -243,8 +247,12 @@ def patient_dashboard():
 
 @app.route('/family')
 def family_dashboard():
-    # Corrected: Check against the integer role_id for a family member (assuming 2)
-    if 'loggedin' in session and session.get('role') == 2:
+    # NEW: Get the role from the database to avoid hardcoded IDs
+    user_role = None
+    if 'role' in session:
+        user_role = Role.query.get(session['role'])
+        
+    if 'loggedin' in session and user_role and user_role.role_name == 'Family of Expectant Mother':
         # Check for the correct protocol on Heroku
         if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
             return render_template('FamilyFriend.html')
@@ -258,8 +266,12 @@ def family_dashboard():
 
 @app.route('/healthcare')
 def healthcare_dashboard():
-    # Corrected: Check against the integer role_id for a healthcare provider (assuming 3)
-    if 'loggedin' in session and session.get('role') == 3:
+    # NEW: Get the role from the database to avoid hardcoded IDs
+    user_role = None
+    if 'role' in session:
+        user_role = Role.query.get(session['role'])
+    
+    if 'loggedin' in session and user_role and user_role.role_name == 'Healthcare Provider':
         # Check for the correct protocol on Heroku
         if request.scheme == 'https' or request.headers.get('X-Forwarded-Proto') == 'https':
             return render_template('HealthCareProvider.html')
