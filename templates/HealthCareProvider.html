@@ -546,7 +546,7 @@
             }
 
             endpoint = '/api/chat/send';
-            payload = { sender_id: senderId, recipient_id: recipientId, text: message };
+            payload = { sender_id: senderId, receiver_id: recipientId, message: message };
 
             try {
                 const response = await fetch(endpoint, {
