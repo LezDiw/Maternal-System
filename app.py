@@ -305,23 +305,46 @@ def logout():
 # MESSAGE API ROUTES
 @app.route('/api/chat/send', methods=['POST'])
 def send_message():
+    """
+    Handles sending chat messages.
+    Includes robust error handling and logging.
+    """
+    print("--- Starting /api/chat/send process ---")
     data = request.json
+    print(f"Received JSON data: {data}")
+
+    # Validate required fields
+    required_fields = ['sender_id', 'receiver_id', 'message']
+    if not all(field in data for field in required_fields):
+        missing_fields = [field for field in required_fields if field not in data]
+        print(f"Error: Missing required fields. Missing: {missing_fields}")
+        return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
     sender_id_str = data.get('sender_id')
     receiver_id_str = data.get('receiver_id')
     message_content = data.get('message')
 
-    # Validate required fields
-    if not all([sender_id_str, receiver_id_str, message_content]):
-        return jsonify({"error": "Missing required fields"}), 400
-
-    # Convert IDs to integers
+    # Convert IDs to integers and validate
     try:
         sender_id = int(sender_id_str)
         receiver_id = int(receiver_id_str)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
+        print(f"Error: Invalid ID format. {e}")
         return jsonify({"error": "Invalid sender_id or receiver_id format"}), 400
 
     try:
+        # Check if sender and receiver exist
+        sender_exists = db.session.query(User.id).filter_by(id=sender_id).first()
+        receiver_exists = db.session.query(User.id).filter_by(id=receiver_id).first()
+
+        if not sender_exists:
+            print(f"Error: Sender with ID {sender_id} not found.")
+            return jsonify({"error": f"Sender with ID {sender_id} not found"}), 404
+        
+        if not receiver_exists:
+            print(f"Error: Receiver with ID {receiver_id} not found.")
+            return jsonify({"error": f"Receiver with ID {receiver_id} not found"}), 404
+
         # Create and save new message
         new_message = Message(
             sender_id=sender_id,
@@ -330,38 +353,50 @@ def send_message():
         )
         db.session.add(new_message)
         db.session.commit()
+        print("Message added to the database successfully.")
 
         return jsonify({"status": "success", "message": "Message sent"}), 200
     
     except Exception as e:
         db.session.rollback()
+        print(f"An unexpected error occurred: {e}")
         return jsonify({"error": str(e)}), 500
+    finally:
+        print("--- /api/chat/send process finished ---")
 
-@app.route('/api/chat/history/<user_id>/<recipient_id>', methods=['GET'])
+@app.route('/api/chat/history/<int:user_id>/<int:recipient_id>', methods=['GET'])
 def get_chat_history(user_id, recipient_id):
+    """
+    Retrieves chat history between two users.
+    Casts user IDs to integers in the route decorator for cleaner code.
+    """
+    print(f"--- Starting /api/chat/history for users {user_id} and {recipient_id} ---")
+    
     try:
-        user_id_int = int(user_id)
-        recipient_id_int = int(recipient_id)
-    except (ValueError, TypeError):
-        return jsonify({"error": "Invalid user ID or recipient ID"}), 400
+        # Query for messages between the two users
+        messages = Message.query.filter(
+            db.or_(
+                db.and_(Message.sender_id == user_id, Message.receiver_id == recipient_id),
+                db.and_(Message.sender_id == recipient_id, Message.receiver_id == user_id)
+            )
+        ).order_by(Message.sent_at.asc()).all()
 
-    # Query for messages between the two users
-    messages = Message.query.filter(
-        db.or_(
-            db.and_(Message.sender_id == user_id_int, Message.receiver_id == recipient_id_int),
-            db.and_(Message.sender_id == recipient_id_int, Message.receiver_id == user_id_int)
-        )
-    ).order_by(Message.sent_at.asc()).all()
+        # Format messages for frontend
+        messages_list = [{
+            "sender_id": m.sender_id,
+            "receiver_id": m.receiver_id,
+            "message": m.content,
+            "timestamp": m.sent_at.isoformat()
+        } for m in messages]
 
-    # Format messages for frontend
-    messages_list = [{
-        "sender_id": m.sender_id,
-        "receiver_id": m.receiver_id,
-        "message": m.content,
-        "timestamp": m.sent_at.isoformat()
-    } for m in messages]
+        print(f"Found {len(messages_list)} messages.")
+        return jsonify(messages_list)
 
-    return jsonify(messages_list)
+    except Exception as e:
+        print(f"An unexpected error occurred while fetching chat history: {e}")
+        return jsonify({"error": "An unexpected error occurred."}), 500
+    finally:
+        print("--- /api/chat/history process finished ---")
 
 # USER API ROUTES
 @app.route('/get_doctors')
