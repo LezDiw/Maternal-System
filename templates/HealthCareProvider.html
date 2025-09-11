@@ -402,7 +402,8 @@
         <h2 id="modalTitle">Add a New Patient</h2>
         <form id="addPatientForm" class="mt-4 space-y-4">
             <input type="hidden" id="patientId" name="patientId">
-            <div>
+            <input type="hidden" id="patientName" name="patientName">
+            <div id="patientNameSelectDiv">
                 <label for="patientNameSelect" class="block text-sm font-medium text-gray-700">Select Existing User</label>
                 <select id="patientNameSelect" name="patientNameSelect" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                     <option value="">Choose a user</option>
@@ -425,10 +426,48 @@
     </div>
 </div>
 
+<!-- Custom Message Modal -->
+<div id="messageModal" class="modal">
+    <div class="modal-content text-center">
+        <span class="close-btn" onclick="hideModal('messageModal')">&times;</span>
+        <p id="messageText" class="text-xl font-medium"></p>
+        <button class="mt-6 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition" onclick="hideModal('messageModal')">OK</button>
+    </div>
+</div>
+
+
 <script>
     let patients = [];
     let providers = [];
     let allUsers = [];
+
+    // --- Utility Functions for Modals and Messages ---
+    const showModal = (modalId) => {
+        document.getElementById(modalId).style.display = 'flex';
+    };
+
+    const hideModal = (modalId) => {
+        document.getElementById(modalId).style.display = 'none';
+        if (modalId === 'addPatientModal') {
+            document.getElementById('addPatientForm').reset();
+            document.getElementById('patientNameSelectDiv').style.display = 'block';
+            document.getElementById('patientId').value = '';
+        }
+    };
+
+    const showMessageModal = (message, isSuccess = true) => {
+        const modal = document.getElementById('messageModal');
+        const messageText = document.getElementById('messageText');
+        messageText.textContent = message;
+        if (isSuccess) {
+            messageText.classList.remove('text-red-600');
+            messageText.classList.add('text-green-600');
+        } else {
+            messageText.classList.remove('text-green-600');
+            messageText.classList.add('text-red-600');
+        }
+        showModal('messageModal');
+    };
 
     // --- Dynamic UI Population Functions ---
     const renderPatients = (filteredPatients = patients) => {
@@ -478,7 +517,8 @@
         const patientNameSelect = document.getElementById('patientNameSelect');
         patientNameSelect.innerHTML = '<option value="">Choose a user</option>';
         allUsers.forEach(user => {
-            if (user.role_id !== 1) { // Only show users who are not already patients
+            const isAlreadyPatient = patients.some(p => p.id === user.id);
+            if (!isAlreadyPatient) {
                 const option = document.createElement('option');
                 option.value = user.id;
                 option.textContent = user.name;
@@ -501,15 +541,12 @@
         let payload = {};
 
         if (type === 'ai') {
-            // NEW: Call your secure backend API
             endpoint = '/api/chat/ai'; 
             payload = { message: message };
             
-            // Display user's message
             messagesDiv.innerHTML += `<div class="user-message"><strong>You:</strong> ${message}</div>`;
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-            // Display loading indicator
             const loadingIndicator = document.getElementById('loading-indicator');
             loadingIndicator.style.display = 'block';
 
@@ -521,7 +558,7 @@
                 });
 
                 const result = await response.json();
-                loadingIndicator.style.display = 'none'; // Hide loading indicator
+                loadingIndicator.style.display = 'none';
                 
                 if (response.ok) {
                     const aiResponse = result.response;
@@ -541,7 +578,7 @@
             recipientId = selectElement.value;
 
             if (!recipientId) {
-                alert(`Please select a ${type} to send a message to.`);
+                showMessageModal(`Please select a ${type} to send a message to.`, false);
                 return;
             }
 
@@ -556,14 +593,15 @@
                 });
 
                 if (response.ok) {
-                    await pollChat(recipientId, type); // Refresh chat after sending
+                    // Assuming pollChat function refreshes the chat window
+                    await pollChat(recipientId, type); 
                 } else {
                     const error = await response.json();
-                    alert('Error sending message: ' + error.error);
+                    showMessageModal('Error sending message: ' + error.error, false);
                 }
             } catch (error) {
                 console.error('Error sending message:', error);
-                alert('Failed to connect to the server.');
+                showMessageModal('Failed to connect to the server.', false);
             }
         }
     };
@@ -589,9 +627,12 @@
         document.getElementById('modalTitle').textContent = `Edit Patient: ${patient.name}`;
         document.querySelector('#addPatientForm button[type="submit"]').textContent = 'Update Patient';
 
+        // Hide the user dropdown for editing
+        document.getElementById('patientNameSelectDiv').style.display = 'none'; 
+
         // Populate the form with patient data
         document.getElementById('patientId').value = patient.id;
-        document.getElementById('patientNameSelect').style.display = 'none'; // Hide the user dropdown for editing
+        document.getElementById('patientName').value = patient.name;
         document.getElementById('patientStatus').value = patient.status;
         document.getElementById('lastCheckin').value = patient.last_checkin;
         
@@ -623,10 +664,17 @@
 
         const payload = {
             status: data.patientStatus,
-            lastCheckin: data.lastCheckin
+            last_checkin: data.lastCheckin
         };
+        
         if (!isEditing) {
             payload.id = data.patientNameSelect;
+            const selectedUser = allUsers.find(u => u.id === parseInt(data.patientNameSelect));
+            if (selectedUser) {
+                payload.name = selectedUser.name;
+            }
+        } else {
+            payload.name = data.patientName;
         }
 
         try {
@@ -640,16 +688,15 @@
 
             if (response.ok) {
                 const result = await response.json();
-                alert(result.message);
+                showMessageModal(result.message);
                 hideModal('addPatientModal');
-                e.target.reset();
-                await loadAllData(); // Reload all data to show the updated lists
+                await loadAllData();
             } else {
                 const error = await response.json();
-                alert('Error processing request: ' + error.error);
+                showMessageModal('Error processing request: ' + error.error, false);
             }
         } catch (error) {
-            alert('Failed to connect to the server.');
+            showMessageModal('Failed to connect to the server.', false);
             console.error('Error:', error);
         }
     });
@@ -679,25 +726,16 @@
         renderPatients(filtered);
     }
 
-    // NEW: Separate function for Add Patient modal
+    // Correctly show "Add Patient" modal
     window.showAddPatientModal = () => {
         document.getElementById('modalTitle').textContent = 'Add a New Patient';
-        document.getElementById('patientNameSelect').style.display = 'block';
+        document.getElementById('patientNameSelectDiv').style.display = 'block';
         document.getElementById('patientId').value = '';
+        document.getElementById('patientName').value = '';
         document.querySelector('#addPatientForm button[type="submit"]').textContent = 'Add Patient';
         document.getElementById('addPatientForm').reset();
         showModal('addPatientModal');
     }
-
-    window.showModal = (modalId) => {
-        document.getElementById(modalId).style.display = 'flex';
-    }
-
-    window.hideModal = (modalId) => {
-        document.getElementById(modalId).style.display = 'none';
-        document.getElementById('addPatientForm').reset();
-        document.getElementById('patientNameSelect').style.display = 'block';
-    };
 
     function getStatusClass(status) {
         switch (status) {
@@ -756,7 +794,7 @@
             renderUserSelection();
         } catch (error) {
             console.error('Error loading users:', error);
-            alert('Failed to load user data.');
+            showMessageModal('Failed to load user data.', false);
         }
     }
 
@@ -770,7 +808,7 @@
             filterPatients(activeTab);
         } catch (error) {
             console.error('Error loading patients:', error);
-            alert('Failed to load patient data.');
+            showMessageModal('Failed to load patient data.', false);
         }
     }
 
@@ -781,15 +819,20 @@
             renderProviders();
         } catch (error) {
             console.error('Error loading providers:', error);
-            alert('Failed to load provider data.');
+            showMessageModal('Failed to load provider data.', false);
         }
+    }
+
+    // Mock pollChat function for now, replace with real implementation
+    async function pollChat(recipientId, type) {
+        console.log(`Polling for new messages for ${type}: ${recipientId}`);
     }
 
     async function loadAllData() {
         await Promise.all([
+            loadUsers(),
             loadPatients(),
-            loadProviders(),
-            loadUsers()
+            loadProviders()
         ]);
     }
 
