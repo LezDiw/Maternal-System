@@ -29,8 +29,8 @@
         <!-- Login Form -->
         <form id="login-form" method="POST" action="/login" onsubmit="return validateLoginForm()" style="display: flex; flex-direction: column; gap: 15px;">
             <input type="text" name="username" id="login-username" placeholder="Username" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
-            <input type="password" name="password_hash" id="login-password" placeholder="Password" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
-            <select name="role_id" id="login-role" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
+            <input type="password" name="password" id="login-password" placeholder="Password" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
+            <select name="role" id="login-role" required style="padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
                 <option value="">-- Select Role --</option>
                 <option value="Patient">Patient</option>
                 <option value="Family of Expectant Mother">Family of Expectant Mother</option>

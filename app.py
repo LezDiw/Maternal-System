@@ -69,7 +69,32 @@ class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     role_name = db.Column(db.String(50), unique=True, nullable=False)
 
-# Basic Routes
+# Debug route to check database status
+@app.route('/debug/db')
+def debug_database():
+    try:
+        # Test connection
+        db.session.execute(db.text('SELECT 1'))
+        
+        # Check roles
+        roles = Role.query.all()
+        roles_info = [{"id": r.id, "name": r.role_name} for r in roles]
+        
+        # Check users
+        users = User.query.all()
+        users_info = [{"id": u.id, "username": u.username, "role_id": u.role_id} for u in users]
+        
+        return jsonify({
+            "database_connected": True,
+            "roles": roles_info,
+            "users": users_info,
+            "total_users": len(users_info)
+        })
+    except Exception as e:
+        return jsonify({
+            "database_connected": False,
+            "error": str(e)
+        }), 500
 @app.route('/')
 def home_page():
     return render_template('M-C-S.html') 
@@ -94,44 +119,66 @@ def login():
         password = request.form.get('password_hash')
         role_name = request.form.get('role_id')
 
+        print(f"🔍 Login attempt - Username: {username}, Role: {role_name}")
+
         # Validate input
         if not username or not password or not role_name:
+            print("❌ Missing required fields")
             flash("Please fill out all fields", "error")
             return render_template('Login.html')
 
         # Find the role by name
         role = Role.query.filter_by(role_name=role_name).first()
         if not role:
+            print(f"❌ Role not found: {role_name}")
             flash("Invalid role selected", "error")
             return render_template('Login.html')
 
+        print(f"✅ Found role - ID: {role.id}, Name: {role.role_name}")
+
         # Find the user by username and role_id
         user = User.query.filter_by(username=username, role_id=role.id).first()
+        if not user:
+            print(f"❌ User not found with username '{username}' and role_id {role.id}")
+            flash("Invalid username or role combination", "error")
+            return render_template('Login.html')
 
-        # Verify user exists and password is correct
-        if user and bcrypt.check_password_hash(user.password_hash, password):
+        print(f"✅ Found user - ID: {user.id}, Username: {user.username}")
+
+        # Verify password
+        if bcrypt.check_password_hash(user.password_hash, password):
+            print("✅ Password verification successful")
+            
             # Set session variables
             session['loggedin'] = True
             session['id'] = user.id
             session['username'] = user.username
             session['role'] = user.role_id
-            session['role_name'] = role.role_name  # Store role name for easier access
+            session['role_name'] = role.role_name
+
+            print(f"✅ Session created - User ID: {session['id']}, Role: {session['role_name']}")
 
             # Redirect based on role name
             if role.role_name == "Patient":
+                print("🏥 Redirecting to patient dashboard")
                 return redirect(url_for('patient_dashboard'))
             elif role.role_name == "Family of Expectant Mother":
+                print("👨‍👩‍👧‍👦 Redirecting to family dashboard")
                 return redirect(url_for('family_dashboard'))
             elif role.role_name == "Healthcare Provider":
+                print("👩‍⚕️ Redirecting to healthcare dashboard")
                 return redirect(url_for('healthcare_dashboard'))
             else:
+                print(f"❌ Unknown role: {role.role_name}")
                 flash("Unknown role", "error")
                 return render_template('Login.html')
         else:
-            flash("Invalid username, password, or role combination", "error")
+            print("❌ Password verification failed")
+            flash("Invalid password", "error")
             return render_template('Login.html')
 
     # GET request - show login page
+    print("📄 Displaying login page")
     return render_template('Login.html')
 
 # REGISTER ROUTE
